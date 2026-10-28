@@ -15,190 +15,776 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<style>
-/* ============================================================
-   AEGIS — one network, two faces.
-   Operator (grey-man) console + Kin (family) light face.
-   ============================================================ */
+<style id="leaflet-css">/* required styles */
 
-:root{
-  /* operator / grey-man palette: monochrome world, colour = meaning */
-  --bg:#0a0b0d;
-  --bg2:#0e1013;
-  --surf:#14171c;
-  --surf2:#191d23;
-  --line:#23282f;
-  --line2:#2d333c;
-  --ink:#e8eaed;
-  --ink2:#9aa1a9;
-  --ink3:#5b626b;
-  --ink4:#3a4049;
-  --live:#f2f4f7;        /* live = bright white */
-  --signal:#d7a53a;      /* rare: active sharing / your own node */
-  --danger:#e5484d;      /* reserved: SOS + threat only */
-  --danger-dim:#7a2a2d;
-  --radius:16px;
-  --radius-s:11px;
-  --ease:cubic-bezier(.22,.61,.36,1);
-  --mono:'JetBrains Mono',ui-monospace,monospace;
-  --sans:'Archivo',system-ui,sans-serif;
-  --sheet-h:76vh;
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
 }
 
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+</style>
+<style>
+:root{
+  --bg:#0a0b0d;--bg2:#0e1013;--surf:#14171c;--surf2:#191d23;--line:#23282f;--line2:#2d333c;
+  --ink:#e8eaed;--ink2:#9aa1a9;--ink3:#5b626b;--ink4:#3a4049;
+  --live:#f2f4f7;--signal:#d7a53a;--danger:#e5484d;--danger-dim:#7a2a2d;
+  --radius:16px;--radius-s:11px;--ease:cubic-bezier(.22,.61,.36,1);
+  --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Archivo',system-ui,sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{
-  font-family:var(--sans);
-  background:var(--bg);
-  color:var(--ink);
-  overflow:hidden;
-  position:fixed;inset:0;
-  -webkit-font-smoothing:antialiased;
-  letter-spacing:-0.01em;
-}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);overflow:hidden;position:fixed;inset:0;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
 button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .mono{font-family:var(--mono);letter-spacing:0}
-
-/* reduced motion */
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.08s!important}}
-
-/* ============================================================ APP SHELL */
-#app{
-  position:relative;height:100%;width:100%;
-  display:flex;flex-direction:column;
-  background:
-    radial-gradient(130% 90% at 50% -10%, #11141a 0%, var(--bg) 55%);
-}
+#app{position:relative;height:100%;width:100%;display:flex;flex-direction:column}
 .hidden{display:none!important}
 
-/* ---------- top status bar ---------- */
-.topbar{
-  position:absolute;top:0;left:0;right:0;z-index:40;
-  padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
-  display:flex;align-items:center;gap:12px;
-  pointer-events:none;
-}
-.topbar>*{pointer-events:auto}
-.brandchip{
-  display:flex;align-items:center;gap:10px;
-  background:rgba(12,14,18,.72);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--line);
-  border-radius:40px;padding:7px 14px 7px 8px;
-}
-.mark{width:26px;height:26px;flex:none;position:relative}
-.mark svg{display:block}
-.brandchip .who{line-height:1}
-.brandchip .who b{font-size:13px;font-weight:800;letter-spacing:.04em}
-.brandchip .who span{display:block;font-size:9.5px;color:var(--ink3);font-family:var(--mono);margin-top:2px;letter-spacing:.06em}
-.dot-live{width:6px;height:6px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 0 rgba(215,165,58,.5);animation:ping 2.4s infinite}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(215,165,58,.45)}70%{box-shadow:0 0 0 7px rgba(215,165,58,0)}100%{box-shadow:0 0 0 0 rgba(215,165,58,0)}}
+/* ---- leaflet overrides ---- */
+#map{position:absolute;inset:0;z-index:0;background:#0c0e12}
+.leaflet-container{background:#0c0e12;font-family:var(--sans)}
+.leaflet-div-icon,.leaflet-marker-icon{background:transparent;border:none}
+.leaflet-control-attribution{font-size:9px!important;background:rgba(10,11,13,.55)!important;color:var(--ink3)!important;padding:2px 6px!important}
+.leaflet-control-attribution a{color:var(--ink2)!important}
+body.family .leaflet-container{background:#eef3f8}
+body.family .leaflet-control-attribution{background:rgba(255,255,255,.6)!important;color:#9d93b3!important}
 
+/* ---- topbar ---- */
+.topbar{position:absolute;top:0;left:0;right:0;z-index:40;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;display:flex;align-items:center;gap:12px;pointer-events:none}
+.topbar>*{pointer-events:auto}
+.brandchip{display:flex;align-items:center;gap:10px;background:rgba(12,14,18,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:40px;padding:7px 14px 7px 8px}
+.mark{width:26px;height:26px;flex:none}
+.brandchip .who b{font-size:13px;font-weight:800;letter-spacing:.04em;line-height:1}
+.brandchip .who span{display:block;font-size:9.5px;color:var(--ink3);font-family:var(--mono);margin-top:2px;letter-spacing:.06em}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--signal);animation:ping 2.4s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(215,165,58,.45)}70%{box-shadow:0 0 0 7px rgba(215,165,58,0)}100%{box-shadow:0 0 0 0 rgba(215,165,58,0)}}
 .topspace{flex:1}
-.pill{
-  background:rgba(12,14,18,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--line);border-radius:40px;height:40px;
-  display:flex;align-items:center;gap:7px;padding:0 13px;
-  font-family:var(--mono);font-size:11px;color:var(--ink2);
-  transition:.2s var(--ease);
-}
-.pill b{color:var(--ink)}
-.pill.on{border-color:var(--signal);color:var(--signal)}
+.pill{background:rgba(12,14,18,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:40px;height:40px;display:flex;align-items:center;gap:7px;padding:0 13px;font-family:var(--mono);font-size:11px;color:var(--ink2);transition:.2s var(--ease)}
 .pill.ghost.on{border-color:var(--ink);color:var(--ink);background:rgba(232,234,237,.08)}
 .pill svg{width:15px;height:15px}
+body.family .brandchip,body.family .pill,body.family .mbtn,body.family .icard{background:rgba(255,255,255,.85);box-shadow:0 6px 20px rgba(124,77,255,.08)}
+body.family .brandchip .who span{color:var(--signal)}
 
-/* ---------- main stage ---------- */
-.stage{position:relative;flex:1;overflow:hidden}
+/* ---- demo banner ---- */
+.demobar{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 62px);z-index:38;background:rgba(215,165,58,.12);border:1px solid rgba(215,165,58,.35);backdrop-filter:blur(14px);border-radius:12px;padding:9px 12px;display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--signal);line-height:1.35}
+.demobar svg{width:15px;height:15px;flex:none}
+.demobar button{margin-left:auto;color:var(--signal);font-weight:800;font-size:11px;flex:none;padding:3px 6px}
+body.family .demobar{background:rgba(124,77,255,.1);border-color:rgba(124,77,255,.3);color:var(--signal)}
 
-/* ============================================================ MAP */
-.mapwrap{position:absolute;inset:0;overflow:hidden}
-.map3d{position:absolute;inset:-20% -10%;transition:transform 1s var(--ease);transform-origin:50% 62%}
-body.tilt .map3d{transform:perspective(900px) rotateX(52deg) scale(1.22) translateY(-4%)}
-#mapsvg{position:absolute;inset:0;width:100%;height:100%}
-.maptex{position:absolute;inset:0;background:
-  radial-gradient(120% 80% at 50% 20%, rgba(255,255,255,.02), transparent 60%),
-  repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,.012) 39px),
-  repeating-linear-gradient(90deg,transparent,transparent 38px,rgba(255,255,255,.012) 39px);
-  pointer-events:none}
-.scan{position:absolute;inset:0;background:linear-gradient(0deg,transparent,rgba(215,165,58,.05),transparent);height:40%;animation:scanmove 6s linear infinite;opacity:.6;pointer-events:none}
-@keyframes scanmove{0%{transform:translateY(-120%)}100%{transform:translateY(320%)}}
-
-/* radar sweep over map */
-.sweep{position:absolute;left:var(--mx,50%);top:var(--my,58%);width:0;height:0;pointer-events:none;z-index:6}
-.sweep i{position:absolute;left:-150vmax;top:-150vmax;width:300vmax;height:300vmax;border-radius:50%;
-  background:conic-gradient(from 0deg, rgba(215,165,58,.14), transparent 22%, transparent 100%);
-  animation:spin 3.4s linear infinite;opacity:0;transition:opacity .4s}
-body.pinging .sweep i{opacity:1}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* blips */
-.layer{position:absolute;inset:0;z-index:7}
-.blip{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
-.blip .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;
-  background:var(--surf2);border:1.5px solid var(--line2);color:var(--ink);position:relative;transition:.25s var(--ease)}
-.blip .av::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid transparent}
+/* ---- blips (leaflet divicons) ---- */
+.blip{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:88px;margin-left:-44px;margin-top:-20px}
+.blip .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;background:var(--surf2);border:1.5px solid var(--line2);color:var(--ink);position:relative;transition:.25s var(--ease)}
 .blip.live .av{border-color:rgba(242,244,247,.7);box-shadow:0 0 0 4px rgba(242,244,247,.06),0 6px 18px rgba(0,0,0,.5)}
-.blip.live .av::after{border-color:rgba(242,244,247,.25);animation:ring 2.6s var(--ease) infinite}
+.blip.live .av::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(242,244,247,.25);animation:ring 2.6s var(--ease) infinite}
 .blip.stale .av{opacity:.5;filter:grayscale(1)}
 .blip.sos .av{border-color:var(--danger);box-shadow:0 0 0 5px rgba(229,72,77,.18);animation:sospulse 1s infinite}
-.blip .tag{font-family:var(--mono);font-size:9px;background:rgba(10,11,13,.8);border:1px solid var(--line);padding:2px 6px;border-radius:20px;color:var(--ink2);white-space:nowrap;backdrop-filter:blur(6px)}
+.blip .tag{font-family:var(--mono);font-size:9px;background:rgba(10,11,13,.82);border:1px solid var(--line);padding:2px 7px;border-radius:20px;color:var(--ink2);white-space:nowrap;backdrop-filter:blur(6px)}
+.blip.demo .tag::before{content:"DEMO · ";color:var(--signal);font-weight:700}
 .blip.me .av{background:var(--signal);color:#1a1200;border-color:#f0c766}
 .blip.me.ghost .av{background:var(--surf);color:var(--ink3);border:1.5px dashed var(--ink3);box-shadow:none}
+.blip.me .av::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(215,165,58,.3);animation:ring 2.6s var(--ease) infinite}
 @keyframes ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.9);opacity:0}}
 @keyframes sospulse{0%,100%{box-shadow:0 0 0 5px rgba(229,72,77,.18)}50%{box-shadow:0 0 0 9px rgba(229,72,77,.05)}}
-
-/* geofence */
-.fence{position:absolute;transform:translate(-50%,-50%);border-radius:50%;border:1.5px dashed rgba(215,165,58,.4);background:radial-gradient(circle,rgba(215,165,58,.06),transparent 70%);z-index:5;pointer-events:none}
-.fence span{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:rgba(215,165,58,.75);white-space:nowrap}
-
-/* pins */
-.mpin{position:absolute;transform:translate(-50%,-100%);z-index:6;cursor:pointer}
-.mpin .ico{width:28px;height:28px;border-radius:9px 9px 9px 2px;background:var(--surf2);border:1px solid var(--line2);display:grid;place-items:center;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.mpinw{cursor:pointer}
+.mpin .ico{width:28px;height:28px;border-radius:9px 9px 9px 2px;background:var(--surf2);border:1px solid var(--line2);display:grid;place-items:center;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,.5);margin-left:-14px;margin-top:-28px}
 .mpin .ico svg{width:15px;height:15px;transform:rotate(45deg);color:var(--ink2)}
+body.family .blip .av{box-shadow:0 6px 16px rgba(124,77,255,.18)}
+body.family .blip.me .av{background:var(--signal);color:#fff;border-color:#9b7aff}
 
-/* map side controls */
+/* ---- sweep overlay on ping ---- */
+.sweep{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .4s;display:grid;place-items:center}
+.sweep i{width:0;height:0}
+.sweep i::before{content:"";position:absolute;left:50%;top:50%;width:200vmax;height:200vmax;transform:translate(-50%,-50%);border-radius:50%;background:conic-gradient(from 0deg,rgba(215,165,58,.14),transparent 22%,transparent 100%);animation:spin 3.2s linear infinite}
+body.pinging .sweep{opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---- map controls ---- */
 .mapctrl{position:absolute;right:14px;bottom:170px;z-index:12;display:flex;flex-direction:column;gap:9px}
 .mbtn{width:46px;height:46px;border-radius:14px;background:rgba(16,19,24,.82);border:1px solid var(--line);backdrop-filter:blur(16px);display:grid;place-items:center;transition:.2s var(--ease)}
 .mbtn svg{width:19px;height:19px;color:var(--ink2)}
 .mbtn:active{transform:scale(.92)}
 .mbtn.on{border-color:var(--signal)}.mbtn.on svg{color:var(--signal)}
-
-/* floating SOS */
-.sosfab{position:absolute;left:14px;bottom:170px;z-index:12;width:58px;height:58px;border-radius:50%;
-  background:radial-gradient(circle at 50% 35%,#ff5a5f,#c42127);border:1px solid #ff7a7e;
-  display:grid;place-items:center;box-shadow:0 8px 28px rgba(229,72,77,.4),inset 0 1px 0 rgba(255,255,255,.3)}
+.sosfab{position:absolute;left:14px;bottom:170px;z-index:12;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ff5a5f,#c42127);border:1px solid #ff7a7e;display:grid;place-items:center;box-shadow:0 8px 28px rgba(229,72,77,.4),inset 0 1px 0 rgba(255,255,255,.3)}
 .sosfab b{font-weight:900;font-size:14px;letter-spacing:.06em;color:#fff}
 .sosfab::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(229,72,77,.4);animation:sospulse 1.6s infinite}
+body.family .sosfab{background:radial-gradient(circle at 50% 35%,#ff7a95,#ff5277)}
 
-/* intel strip */
 .intel{position:absolute;left:14px;right:14px;bottom:102px;z-index:11;display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
 .intel::-webkit-scrollbar{display:none}
 .icard{flex:none;background:rgba(16,19,24,.8);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:13px;padding:10px 13px;min-width:132px}
-.icard .k{font-family:var(--mono);font-size:9px;color:var(--ink3);letter-spacing:.08em;display:flex;align-items:center;gap:5px}
+.icard .k{font-family:var(--mono);font-size:9px;color:var(--ink3);letter-spacing:.08em}
 .icard .v{font-size:18px;font-weight:800;margin-top:5px}
 .icard .v small{font-size:11px;color:var(--ink2);font-weight:500}
 .icard.alert{border-color:var(--danger-dim)}.icard.alert .v{color:var(--danger)}
 
-/* ============================================================ BOTTOM NAV */
-.nav{position:absolute;left:0;right:0;bottom:0;z-index:45;
-  padding:8px 10px calc(env(safe-area-inset-bottom) + 10px);
-  background:linear-gradient(0deg,var(--bg) 40%,rgba(10,11,13,.6) 85%,transparent);
-  display:flex;justify-content:space-around;align-items:flex-end}
+/* ---- nav ---- */
+.nav{position:absolute;left:0;right:0;bottom:0;z-index:45;padding:8px 10px calc(env(safe-area-inset-bottom) + 10px);background:linear-gradient(0deg,var(--bg) 40%,rgba(10,11,13,.6) 85%,transparent);display:flex;justify-content:space-around;align-items:flex-end}
 .nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--ink3);position:relative;transition:.2s}
 .nav button svg{width:22px;height:22px}
 .nav button span{font-size:9.5px;font-weight:600;letter-spacing:.02em}
 .nav button.on{color:var(--ink)}
 .nav button.on::before{content:"";position:absolute;top:-2px;width:4px;height:4px;border-radius:50%;background:var(--signal)}
 .nav button.sosnav svg{color:var(--danger)}
+body.family .nav button.on::before{background:var(--signal)}
 
-/* ============================================================ SHEETS / PANELS */
+/* ---- sheets ---- */
 .scrim{position:absolute;inset:0;z-index:50;background:rgba(5,6,8,.6);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.3s}
 .scrim.show{opacity:1;pointer-events:auto}
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:55;max-height:90vh;
-  background:linear-gradient(180deg,var(--surf) 0%,var(--bg2) 100%);
-  border-top:1px solid var(--line2);border-radius:24px 24px 0 0;
-  transform:translateY(102%);transition:transform .42s var(--ease);
-  display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.6)}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:55;max-height:90vh;background:linear-gradient(180deg,var(--surf) 0%,var(--bg2) 100%);border-top:1px solid var(--line2);border-radius:24px 24px 0 0;transform:translateY(102%);transition:transform .42s var(--ease);display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.6)}
 .sheet.show{transform:translateY(0)}
 .grab{width:38px;height:4px;border-radius:4px;background:var(--line2);margin:11px auto 4px}
 .sheet .shead{padding:6px 20px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
@@ -208,16 +794,13 @@ body.pinging .sweep i{opacity:1}
 .xbtn{width:32px;height:32px;border-radius:50%;background:var(--surf2);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink2)}
 .xbtn svg{width:16px;height:16px}
 
-/* ============================================================ FULL SCREENS (people/comms/jaba/more) */
-.screen{position:absolute;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;
-  transform:translateX(100%);transition:transform .4s var(--ease);padding-top:calc(env(safe-area-inset-top) + 64px)}
+.screen{position:absolute;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .4s var(--ease);padding-top:calc(env(safe-area-inset-top) + 64px)}
 .screen.show{transform:translateX(0)}
 .screen .shead2{padding:4px 18px 14px;display:flex;align-items:flex-end;gap:10px}
 .screen .shead2 h1{font-size:26px;font-weight:900;letter-spacing:-.03em}
 .screen .shead2 .cnt{font-family:var(--mono);font-size:11px;color:var(--ink3);padding-bottom:5px}
 .screen .scroll{flex:1;overflow-y:auto;padding:0 18px calc(96px + env(safe-area-inset-bottom))}
 
-/* people list */
 .person{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
 .pav{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:800;background:var(--surf2);border:1px solid var(--line2);flex:none;position:relative}
 .pav .st{position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--bg)}
@@ -227,19 +810,16 @@ body.pinging .sweep i{opacity:1}
 .rolechip{font-family:var(--mono);font-size:8.5px;padding:2px 6px;border-radius:5px;background:var(--surf2);border:1px solid var(--line2);color:var(--ink2);letter-spacing:.04em}
 .rolechip.admin{color:var(--signal);border-color:rgba(215,165,58,.3)}
 .rolechip.trust{color:#7fd1a6;border-color:rgba(127,209,166,.25)}
+.rolechip.demo{color:var(--signal);border-color:rgba(215,165,58,.3)}
 .person .nm small{font-family:var(--mono);font-size:10.5px;color:var(--ink3);display:block;margin-top:3px}
 .batt{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
 .battbar{width:26px;height:11px;border:1px solid var(--line2);border-radius:3px;position:relative;padding:1.5px}
 .battbar i{display:block;height:100%;border-radius:1px;background:var(--ink2)}
 .battbar.low i{background:var(--danger)}
 .battbar::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:4px;background:var(--line2);border-radius:0 2px 2px 0}
-
-/* consent banner */
 .consent{display:flex;align-items:center;gap:9px;font-size:11px;color:#7fd1a6;background:rgba(127,209,166,.07);border:1px solid rgba(127,209,166,.2);border-radius:9px;padding:8px 11px;margin:3px 0 0}
 .consent svg{width:14px;height:14px;flex:none}
 .consent.paused{color:var(--ink2);background:var(--surf2);border-color:var(--line2)}
-
-/* permission matrix (discord style) */
 .perm{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
 .perm .pt b{font-size:14px;font-weight:600;display:block}
 .perm .pt small{font-size:11px;color:var(--ink3)}
@@ -249,7 +829,6 @@ body.pinging .sweep i{opacity:1}
 .tgl.on i{left:22px;background:var(--signal)}
 .tgl.lock{opacity:.5}
 
-/* chat */
 .channels{display:flex;gap:8px;padding:0 18px 12px;overflow-x:auto;scrollbar-width:none}
 .channels::-webkit-scrollbar{display:none}
 .chan{flex:none;font-family:var(--mono);font-size:11px;padding:8px 14px;border-radius:40px;border:1px solid var(--line);color:var(--ink2);transition:.2s}
@@ -270,21 +849,17 @@ body.pinging .sweep i{opacity:1}
 .send svg{width:19px;height:19px;color:#1a1200}
 .enc{font-family:var(--mono);font-size:9px;color:var(--ink3);text-align:center;padding:4px;display:flex;align-items:center;justify-content:center;gap:5px}
 .enc svg{width:11px;height:11px}
-
-/* JABA assistant */
 .jabahero{padding:0 18px 16px;display:flex;flex-direction:column;align-items:center;text-align:center}
 .jabaorb{width:88px;height:88px;position:relative;margin:4px 0 14px}
 .jabaorb .core{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a2113,#0e0b06);border:1px solid rgba(215,165,58,.4);box-shadow:0 0 40px rgba(215,165,58,.2),inset 0 0 20px rgba(215,165,58,.15)}
-.jabaorb .r{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(215,165,58,.2);animation:ring2 4s linear infinite}
+.jabaorb .r{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(215,165,58,.2);animation:spin 4s linear infinite}
 .jabaorb .r2{inset:-12px;animation-duration:7s;animation-direction:reverse}
-@keyframes ring2{to{transform:rotate(360deg)}}
 .jabaorb .g{position:absolute;inset:34%;border-radius:50%;background:var(--signal);animation:breathe 3s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(.8);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+body.family .jabaorb .core{background:radial-gradient(circle at 40% 35%,#e9ddff,#d4c2ff);border-color:var(--signal)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 18px 10px}
 .qchip{font-size:12px;padding:9px 14px;border-radius:40px;background:var(--surf2);border:1px solid var(--line2);color:var(--ink2);transition:.2s}
 .qchip:active{transform:scale(.95);border-color:var(--signal)}
-
-/* add person / QR */
 .addrow{display:flex;gap:10px;margin-bottom:16px}
 .addrow .opt{flex:1;background:var(--surf2);border:1px solid var(--line2);border-radius:13px;padding:14px 10px;text-align:center;transition:.2s}
 .addrow .opt.on{border-color:var(--signal);background:rgba(215,165,58,.08)}
@@ -294,8 +869,6 @@ body.pinging .sweep i{opacity:1}
 .qrbox{aspect-ratio:1;max-width:220px;margin:0 auto;background:#fff;border-radius:16px;padding:16px;display:grid;place-items:center}
 .codebox{text-align:center;padding:20px;background:var(--surf2);border:1px dashed var(--line2);border-radius:14px;margin:4px 0}
 .codebox .code{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:.3em;color:var(--signal);margin:6px 0}
-
-/* generic ui bits */
 .field{margin-bottom:14px}
 .field label{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:.06em;display:block;margin-bottom:7px}
 .field input,.field textarea,.field select{width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:11px;padding:13px 14px;color:var(--ink);font-family:var(--sans);font-size:14px;outline:none}
@@ -304,16 +877,14 @@ body.pinging .sweep i{opacity:1}
 .btn:active{transform:scale(.98)}
 .btn.ghost{background:var(--surf2);border:1px solid var(--line2);color:var(--ink)}
 .btn.danger{background:var(--danger);color:#fff}
+body.family .btn{color:#fff}
 .note{font-size:12px;color:var(--ink3);line-height:1.5;margin-top:10px}
-
 .secttl{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:.1em;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
 .secttl::after{content:"";flex:1;height:1px;background:var(--line)}
 .row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
 .row .ri{width:38px;height:38px;border-radius:11px;background:var(--surf2);border:1px solid var(--line2);display:grid;place-items:center;flex:none}
 .row .ri svg{width:18px;height:18px;color:var(--ink2)}
 .row .rt{flex:1}.row .rt b{font-size:14px;font-weight:600}.row .rt small{font-size:11.5px;color:var(--ink3);display:block;margin-top:2px}
-
-/* dossier */
 .doss .top{display:flex;gap:14px;align-items:center;margin-bottom:16px}
 .doss .pavb{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-size:22px;font-weight:800;background:var(--surf2);border:1px solid var(--line2)}
 .doss h2{font-size:21px;font-weight:800}
@@ -322,8 +893,6 @@ body.pinging .sweep i{opacity:1}
 .met .k{font-family:var(--mono);font-size:9px;color:var(--ink3);letter-spacing:.06em}
 .met .v{font-size:17px;font-weight:800;margin-top:5px}
 .met .v small{font-size:11px;color:var(--ink2);font-weight:500}
-
-/* transit */
 .dep{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .linebadge{min-width:40px;height:30px;border-radius:7px;display:grid;place-items:center;font-weight:800;font-size:13px;font-family:var(--mono);flex:none;padding:0 6px}
 .lb-bus{background:#2a2016;color:var(--signal);border:1px solid rgba(215,165,58,.3)}
@@ -333,13 +902,11 @@ body.pinging .sweep i{opacity:1}
 .dep .din{font-family:var(--mono);font-size:14px;font-weight:700;text-align:right}
 .dep .din small{font-size:9px;color:var(--ink3);display:block;font-weight:400}
 
-/* ============================================================ LOCK SCREEN */
-#lock{position:absolute;inset:0;z-index:200;background:
-  radial-gradient(130% 80% at 50% 0%,#12151b,#060708 60%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;transition:.5s var(--ease)}
+/* lock */
+#lock{position:absolute;inset:0;z-index:200;background:radial-gradient(130% 80% at 50% 0%,#12151b,#060708 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;transition:.5s var(--ease)}
 #lock.gone{opacity:0;transform:scale(1.05);pointer-events:none}
 .lockmark{width:66px;height:66px;margin-bottom:22px;position:relative}
-.lockmark .r{position:absolute;inset:-14px;border:1px solid rgba(215,165,58,.15);border-radius:50%;animation:ring2 8s linear infinite}
+.lockmark .r{position:absolute;inset:-14px;border:1px solid rgba(215,165,58,.15);border-radius:50%;animation:spin 8s linear infinite}
 #lock h1{font-size:30px;font-weight:900;letter-spacing:.12em}
 #lock .tag{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:.3em;margin-top:8px;text-transform:uppercase}
 .dots{display:flex;gap:14px;margin:34px 0 28px}
@@ -353,15 +920,11 @@ body.pinging .sweep i{opacity:1}
 .key.fn{font-size:12px;font-family:var(--mono);color:var(--ink3);background:none;border:none}
 .lockhint{font-family:var(--mono);font-size:10px;color:var(--ink4);margin-top:26px}
 
-/* toast */
-.toast{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:120;
-  background:var(--surf2);border:1px solid var(--line2);border-radius:40px;padding:11px 18px;font-size:13px;font-weight:600;
-  display:flex;align-items:center;gap:9px;opacity:0;pointer-events:none;transition:.3s var(--ease);white-space:nowrap;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:120;background:var(--surf2);border:1px solid var(--line2);border-radius:40px;padding:11px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;opacity:0;pointer-events:none;transition:.3s var(--ease);white-space:nowrap;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast svg{width:16px;height:16px;flex:none}
 .toast.good svg{color:#7fd1a6}.toast.warn svg{color:var(--signal)}.toast.bad svg{color:var(--danger)}
 
-/* SOS overlay */
 #sosover{position:absolute;inset:0;z-index:150;background:rgba(40,6,8,.92);backdrop-filter:blur(6px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px}
 #sosover.show{display:flex}
 .sosbig{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#ff5a5f,#a81b20);display:grid;place-items:center;position:relative;border:2px solid #ff8589}
@@ -369,98 +932,53 @@ body.pinging .sweep i{opacity:1}
 .sosbig::after{animation-delay:1s}
 @keyframes sosrad{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
 .sosbig .num{font-size:70px;font-weight:900;color:#fff}
-.sosbig .lbl{position:absolute;bottom:34px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.8);letter-spacing:.2em}
+.sosbig .lbl{position:absolute;bottom:34px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.8);letter-spacing:.2em;text-align:center;padding:0 10px}
 #sosover h2{color:#fff;font-size:24px;font-weight:900;margin:30px 0 8px;text-align:center}
 #sosover p{color:rgba(255,255,255,.7);font-size:14px;text-align:center;max-width:300px;line-height:1.5}
 .soscancel{margin-top:30px;padding:14px 40px;border-radius:40px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-weight:700;font-size:15px}
 .sossent{display:none;flex-direction:column;align-items:center}
-#sosover.sent .sosbig .num{display:none}
 .chkbig{width:70px;height:70px}
 
-/* ============================================================ FAMILY (KIN) FACE */
-body.family{--bg:#f4f0ff;--bg2:#fff;--surf:#fff;--surf2:#f3eefc;--line:#ece6f8;--line2:#e0d6f3;
-  --ink:#241a38;--ink2:#6b5e85;--ink3:#9d93b3;--signal:#7c4dff;--live:#00c389;--danger:#ff5277;
-  --sans:'Nunito',system-ui,sans-serif;--mono:'Nunito',sans-serif;--radius:22px;--radius-s:16px}
-body.family #app{background:radial-gradient(120% 80% at 80% -10%,#efe6ff,#f4f0ff 50%)}
-body.family .brandchip,body.family .pill,body.family .mbtn,body.family .icard{background:rgba(255,255,255,.85);box-shadow:0 6px 20px rgba(124,77,255,.08)}
-body.family .brandchip .who span{color:var(--signal)}
-body.family .mark .op-only{display:none}
-body.family .map3d #mapsvg .road{stroke:#e4daf7}
-body.family .map3d #mapsvg .road2{stroke:#efe8fb}
-body.family .map3d #mapsvg .park{fill:#d9f2e4}
-body.family .map3d #mapsvg .water{fill:#cfe6fb}
-body.family .map3d #mapsvg .block{fill:#faf7ff;stroke:#efe8fb}
-body.family .maptex,body.family .scan{display:none}
-body.family .blip .av{box-shadow:0 6px 16px rgba(124,77,255,.18)}
-body.family .blip.live .av{border-color:var(--signal);background:var(--surf)}
-body.family .blip.me .av{background:var(--signal);color:#fff;border-color:#9b7aff}
-body.family .nav button.on::before{background:var(--signal)}
-body.family .fence{border-color:rgba(124,77,255,.4);background:radial-gradient(circle,rgba(124,77,255,.07),transparent 70%)}
-body.family .fence span{color:var(--signal)}
-body.family .send svg,body.family .btn{color:#fff}
-body.family .btn{color:#fff}
-body.family .sosfab{background:radial-gradient(circle at 50% 35%,#ff7a95,#ff5277)}
-body.family .jabaorb .core{background:radial-gradient(circle at 40% 35%,#e9ddff,#d4c2ff);border-color:var(--signal)}
-body.family .jabaorb .g{background:var(--signal)}
-body.family .blip.me.ghost .av{border-style:dashed;color:var(--ink3);background:var(--surf)}
-
-/* family hides operator-only surfaces */
-body.family .op-feature{display:none!important}
-
-/* desktop console layout */
+/* desktop */
 @media (min-width:900px){
   #app{flex-direction:row}
-  .topbar{left:auto;right:16px;width:auto;top:0}
-  .nav{position:absolute;left:0;top:0;bottom:0;right:auto;width:84px;flex-direction:column;justify-content:flex-start;gap:6px;
-    padding:calc(env(safe-area-inset-top) + 72px) 0 20px;background:var(--bg2);border-right:1px solid var(--line)}
+  .nav{position:absolute;left:0;top:0;bottom:0;right:auto;width:84px;flex-direction:column;justify-content:flex-start;gap:6px;padding:calc(env(safe-area-inset-top) + 72px) 0 20px;background:var(--bg2);border-right:1px solid var(--line)}
   .nav button{flex:none;padding:12px 0}
-  .stage{margin-left:84px}
-  .screen{left:84px}
-  .sheet{left:auto;right:24px;bottom:24px;width:420px;max-height:calc(100vh - 48px);border-radius:24px;transform:translateY(0) translateX(120%)}
+  #map{left:84px}
+  .topbar{left:84px}
+  .screen{left:84px}.scrim{left:84px}
+  .demobar{left:96px}
+  .sheet{left:auto;right:24px;bottom:24px;width:420px;max-height:calc(100vh - 48px);border-radius:24px;transform:translateX(130%)}
   .sheet.show{transform:translateX(0)}
-  .scrim{left:84px}
-  .intel{left:24px;right:auto;bottom:24px;max-width:60%}
-  .mapctrl{bottom:100px}.sosfab{bottom:100px;left:24px}
-  .mapctrl{right:24px}
+  .intel{left:96px;right:auto;bottom:24px;max-width:55%}
+  .mapctrl{bottom:100px;right:24px}.sosfab{bottom:100px;left:96px}
   .brandchip{display:none}
   .deskbrand{display:flex!important}
 }
 .deskbrand{display:none;position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:0;width:84px;z-index:46;flex-direction:column;align-items:center;gap:4px}
 .deskbrand .mark{width:34px;height:34px}
 .deskbrand b{font-size:11px;font-weight:900;letter-spacing:.1em}
+#famExit{display:none;position:absolute;left:14px;top:calc(env(safe-area-inset-top) + 12px);z-index:60}
 </style>
 </head>
 <body class="op">
 
-<!-- ================= LOCK SCREEN ================= -->
 <div id="lock">
-  <div class="lockmark">
-    <div class="r"></div>
+  <div class="lockmark"><div class="r"></div>
     <svg viewBox="0 0 66 66" fill="none"><circle cx="33" cy="33" r="30" stroke="#d7a53a" stroke-width="1.2" opacity=".5"/><path d="M33 12 L50 22 V38 C50 48 42 54 33 57 C24 54 16 48 16 38 V22 Z" fill="#14171c" stroke="#d7a53a" stroke-width="1.4"/><circle cx="33" cy="33" r="5" fill="#d7a53a"/><path d="M33 33 L33 22" stroke="#d7a53a" stroke-width="2" stroke-linecap="round"/></svg>
   </div>
-  <h1>AEGIS</h1>
-  <div class="tag">Operator&nbsp;·&nbsp;JABA</div>
+  <h1>AEGIS</h1><div class="tag">Operator&nbsp;·&nbsp;JABA</div>
   <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
   <div class="keypad" id="keypad"></div>
   <div class="lockhint">Demo-PIN&nbsp;·&nbsp;2049</div>
 </div>
 
-<!-- ================= APP ================= -->
 <div id="app">
+  <div class="deskbrand"><div class="mark"><svg viewBox="0 0 34 34" fill="none"><path d="M17 3 L29 10 V20 C29 27 23 31 17 33 C11 31 5 27 5 20 V10 Z" fill="#14171c" stroke="#d7a53a" stroke-width="1.3"/><circle cx="17" cy="17" r="3" fill="#d7a53a"/></svg></div><b>AEGIS</b></div>
 
-  <!-- desktop brand -->
-  <div class="deskbrand">
-    <div class="mark"><svg viewBox="0 0 34 34" fill="none"><path d="M17 3 L29 10 V20 C29 27 23 31 17 33 C11 31 5 27 5 20 V10 Z" fill="#14171c" stroke="#d7a53a" stroke-width="1.3"/><circle cx="17" cy="17" r="3" fill="#d7a53a"/></svg></div>
-    <b>AEGIS</b>
-  </div>
-
-  <!-- topbar -->
   <div class="topbar">
-    <div class="brandchip">
-      <div class="mark"><svg viewBox="0 0 30 30" fill="none"><path d="M15 2.5 L26 9 V18 C26 24 20.5 27.5 15 29.5 C9.5 27.5 4 24 4 18 V9 Z" fill="#14171c" stroke="#d7a53a" stroke-width="1.3" class="op-only"/><path class="fam-mark" d="M15 2.5 L26 9 V18 C26 24 20.5 27.5 15 29.5 C9.5 27.5 4 24 4 18 V9 Z" fill="none" stroke="#7c4dff" stroke-width="1.3" style="display:none"/><circle cx="15" cy="15.5" r="2.6" fill="currentColor" style="color:#d7a53a"/></svg></div>
-      <div class="who"><b id="brandName">AEGIS</b><span id="brandSub">NODE · JABA</span></div>
-      <div class="dot-live"></div>
-    </div>
+    <div class="brandchip"><div class="mark"><svg viewBox="0 0 30 30" fill="none"><path d="M15 2.5 L26 9 V18 C26 24 20.5 27.5 15 29.5 C9.5 27.5 4 24 4 18 V9 Z" fill="#14171c" stroke="#d7a53a" stroke-width="1.3"/><circle cx="15" cy="15.5" r="2.6" fill="#d7a53a"/></svg></div>
+      <div class="who"><b id="brandName">AEGIS</b><span id="brandSub">NODE · JABA</span></div><div class="dot-live"></div></div>
     <div class="topspace"></div>
     <button class="pill ghost" id="ghostBtn" onclick="toggleGhost()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3C8 3 6 6 6 10v8l2-1.5L10 18l2-1.5L14 18l2-1.5L18 18v-8c0-4-2-7-6-7Z"/><circle cx="9.5" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="10" r="1" fill="currentColor"/></svg>
@@ -468,711 +986,296 @@ body.family .op-feature{display:none!important}
     </button>
   </div>
 
-  <!-- ===== MAP STAGE ===== -->
-  <div class="stage" id="stage">
-    <div class="mapwrap">
-      <div class="map3d" id="map3d">
-        <svg id="mapsvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-          <rect width="1000" height="1000" fill="#0c0e12"/>
-          <!-- blocks -->
-          <g class="blocks"></g>
-          <!-- water -->
-          <path class="water" d="M-20 620 C180 560 300 720 520 680 C720 645 820 760 1050 700 L1050 1050 L-20 1050 Z" fill="#0f141a"/>
-          <!-- park -->
-          <ellipse class="park" cx="760" cy="300" rx="140" ry="110" fill="#10140f"/>
-          <!-- roads -->
-          <g class="roads"></g>
-        </svg>
-      </div>
-      <div class="maptex"></div>
-      <div class="scan"></div>
-      <div class="sweep"><i></i></div>
-      <div class="layer" id="layer"></div>
-    </div>
+  <div id="map"></div>
+  <div class="sweep"><i></i></div>
 
-    <!-- map controls -->
-    <div class="mapctrl">
-      <button class="mbtn" id="tiltBtn" onclick="toggleTilt()" title="3D">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="M2 14l10 5 10-5" opacity=".5"/></svg>
-      </button>
-      <button class="mbtn op-feature" onclick="openSheet('pingSheet'); doPing()" title="Radar-Ping">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /><circle cx="12" cy="12" r="8" opacity=".5"/></svg>
-      </button>
-      <button class="mbtn op-feature" onclick="openSheet('offlineSheet')" title="Offline">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 15V3m0 12-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-      </button>
-      <button class="mbtn" onclick="recenter()" title="Zentrieren">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"/><path d="M12 1v3M12 20v3M23 12h-3M4 12H1"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
-      </button>
-    </div>
-
-    <!-- SOS fab -->
-    <button class="sosfab" onclick="startSOS()" title="SOS"><b>SOS</b></button>
-
-    <!-- intel strip -->
-    <div class="intel" id="intel"></div>
+  <div class="demobar" id="demobar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17v.3"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <span><b>Demo-Netzwerk.</b> Mara, Theo & Co. sind Beispiel-Kontakte. Echtes Teilen kommt mit dem Firebase-Schritt.</span>
+    <button onclick="document.getElementById('demobar').style.display='none'">OK</button>
   </div>
 
-  <!-- ===== FULL SCREENS ===== -->
-  <!-- People -->
-  <section class="screen" id="peopleScreen">
-    <div class="shead2"><h1>Netzwerk</h1><div class="cnt" id="peopleCount"></div></div>
-    <div class="scroll" id="peopleList"></div>
-  </section>
+  <div class="mapctrl">
+    <button class="mbtn op-feature" onclick="openSheet('pingSheet'); doPing()" title="Radar-Ping"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" opacity=".5"/></svg></button>
+    <button class="mbtn on" id="labelBtn" onclick="toggleLabels()" title="Beschriftung"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7V5h16v2M9 5v14M7 19h4"/></svg></button>
+    <button class="mbtn op-feature" onclick="openSheet('offlineSheet')" title="Offline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 15V3m0 12-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+    <button class="mbtn" id="gpsBtn" onclick="recenter()" title="Mein Standort"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"/><path d="M12 1v3M12 20v3M23 12h-3M4 12H1"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></button>
+  </div>
 
-  <!-- Comms -->
-  <section class="screen" id="commsScreen">
-    <div class="shead2"><h1>Comms</h1><div class="cnt">verschlüsselt</div></div>
-    <div class="channels" id="channels"></div>
-    <div class="msgs" id="msgs"></div>
+  <button class="sosfab" onclick="startSOS()" title="SOS"><b>SOS</b></button>
+  <div class="intel" id="intel"></div>
+
+  <!-- screens -->
+  <section class="screen" id="peopleScreen"><div class="shead2"><h1>Netzwerk</h1><div class="cnt" id="peopleCount"></div></div><div class="scroll" id="peopleList"></div></section>
+  <section class="screen" id="commsScreen"><div class="shead2"><h1>Comms</h1><div class="cnt">verschlüsselt</div></div><div class="channels" id="channels"></div><div class="msgs" id="msgs"></div>
     <div class="enc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Ende-zu-Ende verschlüsselt · nicht mitgelesen</div>
-    <div class="composer">
-      <input id="msgInput" placeholder="Nachricht…" onkeydown="if(event.key==='Enter')sendMsg()">
-      <button class="send" onclick="sendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button>
-    </div>
+    <div class="composer"><input id="msgInput" placeholder="Nachricht…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="send" onclick="sendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button></div>
   </section>
-
-  <!-- JABA -->
-  <section class="screen" id="jabaScreen">
-    <div class="shead2"><h1>JABA</h1><div class="cnt">Assistent</div></div>
-    <div class="jabahero">
-      <div class="jabaorb"><div class="r"></div><div class="r r2"></div><div class="core"></div><div class="g"></div></div>
-    </div>
-    <div class="chips">
-      <button class="qchip" onclick="jabaAsk('Wer hat wenig Akku?')">Wer hat wenig Akku?</button>
-      <button class="qchip" onclick="jabaAsk('Route zu Mara')">Route zu Mara</button>
-      <button class="qchip" onclick="jabaAsk('Status Zusammenfassung')">Lage-Status</button>
-      <button class="qchip" onclick="jabaAsk('Nächste Bahn')">Nächste Bahn</button>
-    </div>
+  <section class="screen" id="jabaScreen"><div class="shead2"><h1>JABA</h1><div class="cnt">Assistent</div></div>
+    <div class="jabahero"><div class="jabaorb"><div class="r"></div><div class="r r2"></div><div class="core"></div><div class="g"></div></div></div>
+    <div class="chips"><button class="qchip" onclick="jabaAsk('Wer hat wenig Akku?')">Wer hat wenig Akku?</button><button class="qchip" onclick="jabaAsk('Route zu Mara')">Route zu Mara</button><button class="qchip" onclick="jabaAsk('Lage-Status')">Lage-Status</button><button class="qchip" onclick="jabaAsk('Nächste Bahn')">Nächste Bahn</button></div>
     <div class="msgs" id="jabaMsgs" style="padding-top:4px"></div>
-    <div class="composer">
-      <input id="jabaInput" placeholder="JABA fragen…" onkeydown="if(event.key==='Enter')jabaSend()">
-      <button class="send" onclick="jabaSend()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button>
-    </div>
+    <div class="composer"><input id="jabaInput" placeholder="JABA fragen…" onkeydown="if(event.key==='Enter')jabaSend()"><button class="send" onclick="jabaSend()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button></div>
   </section>
+  <section class="screen" id="moreScreen"><div class="shead2"><h1>Mehr</h1></div><div class="scroll">
+    <div class="secttl">Deine Sichtbarkeit</div>
+    <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3C8 3 6 6 6 10v8l2-1.5L10 18l2-1.5L14 18l2-1.5L18 18v-8c0-4-2-7-6-7Z"/></svg></div><div class="rt"><b>Ghost-Mode</b><small>Teilen pausieren — andere sehen „pausiert", keinen Fake-Ort</small></div><div class="tgl" id="ghostTgl" onclick="toggleGhost()"><i></i></div></div>
+    <div class="secttl">Netzwerk & Karten</div>
+    <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M4 20c0-3 2-5 5-5s5 2 5 5"/></svg></div><div class="rt"><b>Demo-Kontakte zeigen</b><small>Beispiel-Personen auf der Karte ein/aus</small></div><div class="tgl on" id="demoTgl" onclick="toggleDemo()"><i></i></div></div>
+    <div class="row" onclick="openSheet('offlineSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 15V3m0 12-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div><div class="rt"><b>Offline-Karten</b><small>Besuchte Gebiete werden fürs Offline-Nutzen gecacht</small></div></div>
+    <div class="row" onclick="openSheet('transitSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l2-3M16 21l-2-3"/></svg></div><div class="rt"><b>Transit</b><small>Bus · Bahn · Taxi</small></div></div>
+    <div class="secttl op-feature">Sicherheit</div>
+    <div class="row op-feature" onclick="openSheet('consentSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><path d="M12 3 4 6v5c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6Z"/></svg></div><div class="rt"><b>Einwilligungs-Center</b><small>beidseitig & widerrufbar</small></div></div>
+    <div class="row op-feature"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div class="rt"><b>Verschlüsselung</b><small>AES-256 · Zero-Knowledge</small></div><div class="tgl on lock"><i></i></div></div>
+    <div class="row op-feature" onclick="toggleFamily()"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M4 20c0-3 2-5 5-5s5 2 5 5"/></svg></div><div class="rt"><b>Familien-Gesicht testen</b><small>zur bunten „Kin"-Ansicht wechseln</small></div></div>
+  </div></section>
 
-  <!-- More -->
-  <section class="screen" id="moreScreen">
-    <div class="shead2"><h1>Mehr</h1></div>
-    <div class="scroll">
-      <div class="secttl">Deine Sichtbarkeit</div>
-      <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3C8 3 6 6 6 10v8l2-1.5L10 18l2-1.5L14 18l2-1.5L18 18v-8c0-4-2-7-6-7Z"/></svg></div><div class="rt"><b>Ghost-Mode</b><small>Teilen pausieren — andere sehen „pausiert", keinen Fake-Ort</small></div><div class="tgl" id="ghostTgl" onclick="toggleGhost()"><i></i></div></div>
-      <div class="row op-feature"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7Z"/></svg></div><div class="rt"><b>Stealth-Optik</b><small>App-Icon tarnen & Schnell-Verbergen gegen Mitlesen</small></div><div class="tgl on" onclick="hap(10);this.classList.toggle('on')"><i></i></div></div>
-
-      <div class="secttl">Netzwerk & Karten</div>
-      <div class="row" onclick="openSheet('offlineSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 15V3m0 12-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div><div class="rt"><b>Offline-Karten</b><small>Regionen in HD herunterladen</small></div></div>
-      <div class="row" onclick="openSheet('transitSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l2-3M16 21l-2-3"/><circle cx="8.5" cy="14.5" r="1" fill="currentColor"/><circle cx="15.5" cy="14.5" r="1" fill="currentColor"/></svg></div><div class="rt"><b>Transit</b><small>Bus · Bahn · Taxi in Echtzeit</small></div></div>
-      <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Z"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div><div class="rt"><b>Karten-Updates</b><small>Live · Baustellen & Sperrungen</small></div><div class="tgl on" onclick="hap(10);this.classList.toggle('on')"><i></i></div></div>
-
-      <div class="secttl op-feature">Sicherheit</div>
-      <div class="row op-feature"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div class="rt"><b>Verschlüsselung</b><small>AES-256 · Zero-Knowledge</small></div><div class="tgl on lock"><i></i></div></div>
-      <div class="row op-feature" onclick="openSheet('consentSheet')"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><path d="M12 3 4 6v5c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6Z"/></svg></div><div class="rt"><b>Einwilligungs-Center</b><small>Wer teilt mit wem — beidseitig & widerrufbar</small></div></div>
-      <div class="row op-feature" onclick="toggleFamily()"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M4 20c0-3 2-5 5-5s5 2 5 5M14 20c0-2 1-3.5 3-3.5"/></svg></div><div class="rt"><b>Familien-Gesicht testen</b><small>Zur bunten „Kin"-Ansicht wechseln</small></div></div>
-    </div>
-  </section>
-
-  <!-- ===== BOTTOM NAV ===== -->
   <nav class="nav" id="nav">
     <button class="on" data-scr="map" onclick="go('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14" opacity=".5"/></svg><span>Karte</span></button>
     <button data-scr="people" onclick="go('people')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 20c0-2.2 1.2-4 3.5-4"/></svg><span>Netzwerk</span></button>
     <button class="sosnav" onclick="startSOS()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7Z"/><path d="M12 8v5M12 16v.5" stroke-linecap="round"/></svg><span>SOS</span></button>
     <button data-scr="comms" onclick="go('comms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v11H9l-4 4V5Z"/></svg><span>Comms</span></button>
-    <button data-scr="jaba" onclick="go('jaba')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19 19l-2-2M7 7 5 5M19 5l-2 2M7 17l-2 2" opacity=".6"/></svg><span>JABA</span></button>
+    <button data-scr="jaba" onclick="go('jaba')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2" opacity=".6"/></svg><span>JABA</span></button>
     <button data-scr="more" onclick="go('more')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg><span>Mehr</span></button>
   </nav>
 
-  <!-- ===== SHEETS ===== -->
   <div class="scrim" id="scrim" onclick="closeSheets()"></div>
+  <div class="sheet" id="dossSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2 id="dossName">—</h2><div class="sub" id="dossSub"></div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody doss" id="dossBody"></div></div>
+  <div class="sheet" id="pingSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Radar-Ping</h2><div class="sub">Entfernung · Luftlinie</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="pingBody"></div></div>
+  <div class="sheet" id="offlineSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Offline-Karten</h2><div class="sub">besuchte Gebiete</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="offlineBody"></div></div>
+  <div class="sheet" id="transitSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Transit</h2><div class="sub">Abfahrten</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="transitBody"></div></div>
+  <div class="sheet" id="addSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Person hinzufügen</h2><div class="sub">beidseitige Einladung</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="addBody"></div></div>
+  <div class="sheet" id="roleSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2 id="roleName">Freigaben</h2><div class="sub">wie bei Discord</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="roleBody"></div></div>
+  <div class="sheet" id="consentSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Einwilligungs-Center</h2><div class="sub">transparent · beidseitig</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="consentBody"></div></div>
+  <div class="sheet" id="pinSheet"><div class="grab"></div><div class="shead"><div style="flex:1"><h2>Pin setzen</h2><div class="sub">Ort markieren</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="sbody" id="pinBody"></div></div>
 
-  <!-- dossier -->
-  <div class="sheet" id="dossSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2 id="dossName">—</h2><div class="sub" id="dossSub"></div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody doss" id="dossBody"></div>
-  </div>
-
-  <!-- ping / radar -->
-  <div class="sheet" id="pingSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Radar-Ping</h2><div class="sub">Intervall-Scan · Entfernung</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="pingBody"></div>
-  </div>
-
-  <!-- offline -->
-  <div class="sheet" id="offlineSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Offline-Karten</h2><div class="sub">HD-Regionen · weltweit</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="offlineBody"></div>
-  </div>
-
-  <!-- transit -->
-  <div class="sheet" id="transitSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Transit</h2><div class="sub">Abfahrten · live</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="transitBody"></div>
-  </div>
-
-  <!-- add person -->
-  <div class="sheet" id="addSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Person hinzufügen</h2><div class="sub">beidseitige Einladung</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="addBody"></div>
-  </div>
-
-  <!-- roles / permissions -->
-  <div class="sheet" id="roleSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2 id="roleName">Rollen & Freigaben</h2><div class="sub">wie bei Discord</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="roleBody"></div>
-  </div>
-
-  <!-- consent center -->
-  <div class="sheet" id="consentSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Einwilligungs-Center</h2><div class="sub">transparent · beidseitig</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="consentBody"></div>
-  </div>
-
-  <!-- add pin -->
-  <div class="sheet" id="pinSheet"><div class="grab"></div>
-    <div class="shead"><div style="flex:1"><h2>Pin setzen</h2><div class="sub">Ort markieren</div></div><button class="xbtn" onclick="closeSheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="sbody" id="pinBody"></div>
-  </div>
-
-  <!-- toast + sos overlay -->
   <div class="toast" id="toast"></div>
-  <div id="sosover">
-    <div class="sosbig"><div class="num" id="sosNum">3</div>
-      <div class="sossent" id="sosSent"><svg class="chkbig" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div class="lbl" id="sosLbl">GEDRÜCKT HALTEN ODER WARTEN</div>
-    </div>
-    <h2 id="sosTitle">Notsignal wird gesendet</h2>
-    <p id="sosDesc">Dein Standort, Akku und ein Audio-Marker gehen an dein Vertrauens-Netzwerk.</p>
-    <button class="soscancel" id="sosCancel" onclick="cancelSOS()">Abbrechen</button>
-  </div>
-
-  <!-- family exit button -->
-  <button id="famExit" class="pill" style="display:none;position:absolute;left:14px;top:calc(env(safe-area-inset-top) + 12px);z-index:60" onclick="toggleFamily()">
-    ← Operator
-  </button>
+  <div id="sosover"><div class="sosbig"><div class="num" id="sosNum">3</div><div class="sossent" id="sosSent"><svg class="chkbig" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div><div class="lbl" id="sosLbl">WIRD GESENDET</div></div><h2 id="sosTitle">Notsignal wird gesendet</h2><p id="sosDesc">Dein Standort, Akku und ein Audio-Marker gehen an dein Vertrauens-Netzwerk.</p><button class="soscancel" id="sosCancel" onclick="cancelSOS()">Abbrechen</button></div>
+  <button id="famExit" class="pill" onclick="toggleFamily()">← Operator</button>
 </div>
 
+<script src="./leaflet.js"></script>
 <script>
-/* ============================================================ HAPTICS */
 function hap(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 function hapPat(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 
-/* ============================================================ DATA */
-const ME={id:'me',name:'JABA',x:50,y:58,battery:88,role:'Operator'};
-let ghost=false, family=false, tilt=false;
-let contacts=[
-  {id:'mara',name:'Mara',init:'M',x:34,y:40,battery:72,live:true,speed:4,role:'trust',zone:'Zuhause',last:0,heading:'NO',note:'Schwester. Pendelt mit der Linie 12.',consent:'mutual'},
-  {id:'theo',name:'Theo',init:'T',x:67,y:33,battery:19,live:true,speed:0,role:'member',zone:'Uni',last:1,heading:'—',note:'Bester Freund. Oft im Park.',consent:'mutual'},
-  {id:'lena',name:'Lena',init:'L',x:72,y:66,battery:54,live:true,speed:22,role:'member',zone:'unterwegs',last:0,heading:'SW',note:'Mit dem Rad unterwegs.',consent:'mutual'},
-  {id:'sam',name:'Sam',init:'S',x:22,y:70,battery:91,live:false,speed:0,role:'guest',zone:'offline',last:46,heading:'—',note:'Cousin. Gastzugang, 24 h.',consent:'mutual'},
-  {id:'opa',name:'Opa Kurt',init:'K',x:45,y:22,battery:63,live:true,speed:1,role:'trust',zone:'Markt',last:0,heading:'N',note:'Sicherheitszone „Zuhause" aktiv.',consent:'mutual'}
-];
-let fences=[{x:34,y:40,r:70,label:'ZUHAUSE · Mara'},{x:45,y:22,r:58,label:'ZUHAUSE · Opa'}];
-let pins=[
-  {x:58,y:48,type:'cam',label:'Kamera Kreuzung'},
-  {x:40,y:60,type:'shop',label:'Späti (24h)'},
-  {x:78,y:30,type:'note',label:'Treffpunkt Park'}
-];
-const PINICONS={
-  cam:'<path d="M3 7h4l2-2h6l2 2h4v12H3Z"/><circle cx="12" cy="13" r="3.5"/>',
-  shop:'<path d="M4 9h16l-1 11H5Z"/><path d="M4 9 6 4h12l2 5"/>',
-  note:'<path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7Z"/>'
-};
+const ME={battery:88};
+let meLL=[52.5200,13.4050]; // fallback (Berlin) until GPS
+let ghost=false, family=false, demoOn=true, labelsOn=true;
+let map, tileLayer, meMarker, routeLine=null;
+let contactMarkers={}, fenceLayers=[], pinMarkers=[];
 
-/* ============================================================ LOCK SCREEN */
+let contacts=[
+  {id:'mara',name:'Mara',init:'M',dlat:-0.004,dlng:-0.006,battery:72,live:true,speed:4,role:'trust',zone:'Zuhause',last:0,heading:'NO',note:'Schwester. Pendelt mit der Linie 12.',consent:'mutual'},
+  {id:'theo',name:'Theo',init:'T',dlat:0.003,dlng:0.008,battery:19,live:true,speed:0,role:'member',zone:'Uni',last:1,heading:'—',note:'Bester Freund. Oft im Park.',consent:'mutual'},
+  {id:'lena',name:'Lena',init:'L',dlat:-0.006,dlng:0.010,battery:54,live:true,speed:22,role:'member',zone:'unterwegs',last:0,heading:'SW',note:'Mit dem Rad unterwegs.',consent:'mutual'},
+  {id:'sam',name:'Sam',init:'S',dlat:-0.009,dlng:-0.008,battery:91,live:false,speed:0,role:'guest',zone:'offline',last:46,heading:'—',note:'Cousin. Gastzugang, 24 h.',consent:'mutual'},
+  {id:'opa',name:'Opa Kurt',init:'K',dlat:0.006,dlng:-0.001,battery:63,live:true,speed:1,role:'trust',zone:'Markt',last:0,heading:'N',note:'Sicherheitszone „Zuhause" aktiv.',consent:'mutual'}
+];
+let pins=[];
+const PINICONS={cam:'<path d="M3 7h4l2-2h6l2 2h4v12H3Z"/><circle cx="12" cy="13" r="3.5"/>',shop:'<path d="M4 9h16l-1 11H5Z"/><path d="M4 9 6 4h12l2 5"/>',note:'<path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7Z"/>'};
+
+/* ---- lock ---- */
 const PIN='2049'; let entered='';
 const keypad=document.getElementById('keypad');
-['1','2','3','4','5','6','7','8','9','·','0','⌫'].forEach(k=>{
-  const b=document.createElement('button');
-  b.className='key'+(k==='·'?' fn':'')+(k==='⌫'?' fn':'');
-  b.textContent=k;
-  b.onclick=()=>keyPress(k);
-  keypad.appendChild(b);
-});
-function keyPress(k){
-  hap(8);
-  if(k==='⌫'){entered=entered.slice(0,-1);}
-  else if(k==='·'){return;}
-  else if(entered.length<4){entered+=k;}
-  renderDots();
-  if(entered.length===4){
-    setTimeout(()=>{
-      if(entered===PIN){hapPat([15,40,15]);document.getElementById('lock').classList.add('gone');boot();}
-      else{document.getElementById('dots').classList.add('err');hapPat([60,40,60]);setTimeout(()=>{entered='';renderDots();document.getElementById('dots').classList.remove('err');},500);}
-    },140);
-  }
-}
+['1','2','3','4','5','6','7','8','9','·','0','⌫'].forEach(k=>{const b=document.createElement('button');b.className='key'+(k==='·'||k==='⌫'?' fn':'');b.textContent=k;b.onclick=()=>keyPress(k);keypad.appendChild(b);});
+function keyPress(k){hap(8);if(k==='⌫')entered=entered.slice(0,-1);else if(k==='·')return;else if(entered.length<4)entered+=k;renderDots();
+  if(entered.length===4)setTimeout(()=>{if(entered===PIN){hapPat([15,40,15]);document.getElementById('lock').classList.add('gone');boot();}else{document.getElementById('dots').classList.add('err');hapPat([60,40,60]);setTimeout(()=>{entered='';renderDots();document.getElementById('dots').classList.remove('err');},500);}},140);}
 function renderDots(){document.querySelectorAll('#dots i').forEach((d,i)=>d.classList.toggle('f',i<entered.length));}
 
-/* ============================================================ MAP RENDER */
-function buildMap(){
-  const blocks=document.querySelector('.blocks'), roads=document.querySelector('.roads');
-  let b='',r='';
-  // city blocks
-  for(let gx=0;gx<1000;gx+=120){
-    for(let gy=0;gy<1000;gy+=120){
-      if(Math.random()>.25){
-        const px=gx+14+Math.random()*10, py=gy+14+Math.random()*10;
-        const w=72+Math.random()*26, h=72+Math.random()*26;
-        b+=`<rect class="block" x="${px}" y="${py}" width="${w}" height="${h}" rx="4" fill="#111419" stroke="#1b2026" stroke-width="1"/>`;
-      }
-    }
-  }
-  document.querySelector('.blocks').innerHTML=b;
-  // roads grid
-  for(let i=0;i<=1000;i+=120){
-    r+=`<line class="road" x1="${i}" y1="0" x2="${i}" y2="1000" stroke="#1f252d" stroke-width="7"/>`;
-    r+=`<line class="road" x1="0" y1="${i}" x2="1000" y2="${i}" stroke="#1f252d" stroke-width="7"/>`;
-  }
-  // a couple of diagonal avenues
-  r+=`<line class="road2" x1="0" y1="200" x2="1000" y2="620" stroke="#232a33" stroke-width="10"/>`;
-  r+=`<line class="road2" x1="120" y1="1000" x2="900" y2="0" stroke="#232a33" stroke-width="9"/>`;
-  document.querySelector('.roads').innerHTML=r;
+/* ---- map ---- */
+const TILES={op:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',opNo:'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',fam:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',famNo:'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png'};
+function tileURL(){return family?(labelsOn?TILES.fam:TILES.famNo):(labelsOn?TILES.op:TILES.opNo);}
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:true,tap:true}).setView(meLL,14);
+  applyTiles();
+  meMarker=L.marker(meLL,{icon:meIcon(),zIndexOffset:1000,interactive:false}).addTo(map);
+  map.on('click',e=>{if(!document.querySelector('.sheet.show'))openPinAt(e.latlng);});
+  locateMe(true);
 }
-function renderMap(){
-  const L=document.getElementById('layer'); L.innerHTML='';
-  // fences
-  fences.forEach(f=>{
-    const el=document.createElement('div');el.className='fence';
-    el.style.cssText=`left:${f.x}%;top:${f.y}%;width:${f.r*2}px;height:${f.r*2}px`;
-    el.innerHTML=`<span>${f.label}</span>`;L.appendChild(el);
-  });
-  // pins
-  pins.forEach(p=>{
-    const el=document.createElement('div');el.className='mpin';
-    el.style.cssText=`left:${p.x}%;top:${p.y}%`;
-    el.innerHTML=`<div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS[p.type]}</svg></div>`;
-    el.onclick=()=>toast('good','📍 '+p.label);
-    L.appendChild(el);
-  });
-  // contacts
-  contacts.forEach(c=>{
-    const el=document.createElement('div');
-    el.className='blip '+(c.sos?'sos':(c.live?'live':'stale'));
-    el.style.cssText=`left:${c.x}%;top:${c.y}%`;
-    el.innerHTML=`<div class="av">${c.init}</div><div class="tag">${c.name}${c.live?' · '+c.speed+'km/h':' · '+c.last+'m'}</div>`;
-    el.onclick=()=>openDossier(c);
-    L.appendChild(el);
-  });
-  // me
-  const me=document.createElement('div');
-  me.className='blip me'+(ghost?' ghost':'');
-  me.style.cssText=`left:${ME.x}%;top:${ME.y}%`;
-  me.innerHTML=`<div class="av">◆</div><div class="tag">${ghost?'du · pausiert':'du · live'}</div>`;
-  L.appendChild(me);
-  // sweep origin = me
-  document.querySelector('.sweep').style.setProperty('--mx',ME.x+'%');
-  document.querySelector('.sweep').style.setProperty('--my',ME.y+'%');
+function applyTiles(){
+  if(tileLayer)map.removeLayer(tileLayer);
+  tileLayer=L.tileLayer(tileURL(),{subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap, © CARTO'}).addTo(map);
 }
+function meIcon(){return L.divIcon({className:'',html:`<div class="blip me ${ghost?'ghost':''}"><div class="av">◆</div><div class="tag">${ghost?'du · pausiert':'du · live'}</div></div>`,iconSize:[0,0]});}
+function contactIcon(c){const cls=c.sos?'sos':(c.live?'live':'stale');return L.divIcon({className:'',html:`<div class="blip demo ${cls}"><div class="av">${c.init}</div><div class="tag">${c.name}${c.live?' · '+c.speed+'km/h':' · '+c.last+'m'}</div></div>`,iconSize:[0,0]});}
+function cLL(c){return [meLL[0]+c.dlat, meLL[1]+c.dlng];}
 
-/* live movement sim */
-function tick(){
-  contacts.forEach(c=>{
-    if(c.live&&c.speed>0){
-      c.x+=(Math.random()-.5)*c.speed*0.05;
-      c.y+=(Math.random()-.5)*c.speed*0.05;
-      c.x=Math.max(6,Math.min(94,c.x));c.y=Math.max(10,Math.min(90,c.y));
-    }
+function renderContacts(){
+  Object.values(contactMarkers).forEach(m=>map.removeLayer(m));contactMarkers={};
+  fenceLayers.forEach(f=>map.removeLayer(f));fenceLayers=[];
+  if(!demoOn){renderIntel();return;}
+  // fences around trust contacts with a home zone
+  contacts.filter(c=>c.role==='trust'&&c.live).forEach(c=>{
+    const circle=L.circle(cLL(c),{radius:260,color:'#d7a53a',weight:1.3,opacity:.5,dashArray:'6 6',fillColor:'#d7a53a',fillOpacity:.05}).addTo(map);
+    fenceLayers.push(circle);
   });
-  if(document.getElementById('map').classList.contains('on'))renderMap();
-  renderMap();
+  contacts.forEach(c=>{
+    const m=L.marker(cLL(c),{icon:contactIcon(c)}).addTo(map);
+    m.on('click',()=>openDossier(c));
+    contactMarkers[c.id]=m;
+  });
   renderIntel();
 }
-
-/* ============================================================ INTEL STRIP */
-function renderIntel(){
-  const live=contacts.filter(c=>c.live).length;
-  const low=contacts.filter(c=>c.battery<25&&c.live);
-  const I=document.getElementById('intel');
-  I.innerHTML=`
-    <div class="icard"><div class="k">● LIVE NODES</div><div class="v">${live}<small>/${contacts.length}</small></div></div>
-    ${low.length?`<div class="icard alert"><div class="k">⚠ AKKU KRITISCH</div><div class="v">${low[0].name} <small>${low[0].battery}%</small></div></div>`:''}
-    <div class="icard"><div class="k">⬡ ZONEN</div><div class="v">${fences.length}<small> aktiv</small></div></div>
-    <div class="icard"><div class="k">◈ PINS</div><div class="v">${pins.length}<small> markiert</small></div></div>
-    <div class="icard"><div class="k">⟳ KARTE</div><div class="v">live<small> · 0 Störungen</small></div></div>`;
-}
-
-/* ============================================================ NAV / SCREENS */
-function go(scr){
-  hap(8);
-  document.querySelectorAll('.nav button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===scr));
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
-  if(scr==='map'){/* map is base */}
-  else document.getElementById(scr+'Screen').classList.add('show');
-  if(scr==='people')renderPeople();
-  if(scr==='comms')renderComms();
-}
-
-/* ============================================================ PEOPLE */
-function roleLabel(r){return{trust:'VERTRAUT',member:'MITGLIED',guest:'GAST',Operator:'OPERATOR'}[r]||r.toUpperCase();}
-function renderPeople(){
-  document.getElementById('peopleCount').textContent=contacts.length+' Kontakte';
-  const L=document.getElementById('peopleList');
-  L.innerHTML=`<div class="person" onclick="openSheet('addSheet');renderAdd()" style="cursor:pointer">
-    <div class="pav" style="background:rgba(215,165,58,.12);border-color:rgba(215,165,58,.4);color:var(--signal)">+</div>
-    <div class="nm"><b style="color:var(--signal)">Person hinzufügen</b><small>QR · Code · Telefonnummer</small></div>
-  </div>`;
-  contacts.forEach(c=>{
-    const stClass=c.sos?'sos':(c.live?'on':'off');
-    const roleCls=c.role==='trust'?'trust':(c.role==='Operator'?'admin':'');
-    L.innerHTML+=`<div class="person">
-      <div class="pav" onclick="openDossier(contacts.find(x=>x.id==='${c.id}'))" style="cursor:pointer">${c.init}<span class="st ${stClass}"></span></div>
-      <div class="nm" onclick="openDossier(contacts.find(x=>x.id==='${c.id}'))" style="cursor:pointer">
-        <b>${c.name} <span class="rolechip ${roleCls}">${roleLabel(c.role)}</span></b>
-        <small>${c.live?'● '+c.zone+' · '+c.heading:'○ zuletzt vor '+c.last+' min'}</small>
-      </div>
-      <div class="batt"><div class="battbar ${c.battery<25?'low':''}"><i style="width:${c.battery}%"></i></div>${c.battery}%</div>
-    </div>`;
+function renderPins(){
+  pinMarkers.forEach(m=>map.removeLayer(m));pinMarkers=[];
+  pins.forEach(p=>{
+    const ic=L.divIcon({className:'mpinw',html:`<div class="mpin"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS[p.type]}</svg></div></div>`,iconSize:[0,0]});
+    const m=L.marker([p.lat,p.lng],{icon:ic}).addTo(map);
+    m.on('click',()=>toast('good','📍 '+p.label));
+    pinMarkers.push(m);
   });
-  L.innerHTML+=`<div class="consent" style="margin-top:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Alle Freigaben sind beidseitig bestätigt und jederzeit widerrufbar.</div>`;
+}
+function locateMe(center){
+  if(!('geolocation' in navigator)){toast('warn','Kein GPS verfügbar — Demo-Ansicht');renderContacts();renderPins();return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    meLL=[pos.coords.latitude,pos.coords.longitude];
+    meMarker.setLatLng(meLL);
+    if(center)map.setView(meLL,15);
+    document.getElementById('gpsBtn').classList.add('on');
+    renderContacts();renderPins();
+    toast('good','Dein echter Standort ist aktiv');
+    navigator.geolocation.watchPosition(p=>{meLL=[p.coords.latitude,p.coords.longitude];if(!ghost)meMarker.setLatLng(meLL);},()=>{},{enableHighAccuracy:true,maximumAge:5000});
+  },err=>{
+    toast('warn', err.code===1?'Standort nicht erlaubt — Demo-Ansicht':'Standort nicht verfügbar — Demo-Ansicht');
+    renderContacts();renderPins();
+  },{enableHighAccuracy:true,timeout:8000});
+}
+function recenter(){hap(8);locateMe(true);}
+function toggleLabels(){labelsOn=!labelsOn;hap(8);document.getElementById('labelBtn').classList.toggle('on',labelsOn);applyTiles();toast('good',labelsOn?'Beschriftung an':'Beschriftung aus');}
+
+/* movement sim for demo */
+function tick(){
+  if(!demoOn)return;
+  contacts.forEach(c=>{if(c.live&&c.speed>0){c.dlat+=(Math.random()-.5)*c.speed*0.000006;c.dlng+=(Math.random()-.5)*c.speed*0.000009;const m=contactMarkers[c.id];if(m)m.setLatLng(cLL(c));}});
 }
 
-/* ============================================================ DOSSIER */
+/* ---- intel ---- */
+function renderIntel(){
+  const live=demoOn?contacts.filter(c=>c.live).length:0;
+  const total=demoOn?contacts.length:0;
+  const low=demoOn?contacts.filter(c=>c.battery<25&&c.live):[];
+  document.getElementById('intel').innerHTML=`
+    <div class="icard"><div class="k">● LIVE NODES</div><div class="v">${live}<small>/${total}</small></div></div>
+    ${low.length?`<div class="icard alert"><div class="k">⚠ AKKU KRITISCH</div><div class="v">${low[0].name} <small>${low[0].battery}%</small></div></div>`:''}
+    <div class="icard"><div class="k">◈ PINS</div><div class="v">${pins.length}<small> markiert</small></div></div>
+    <div class="icard"><div class="k">⟳ KARTE</div><div class="v">live<small> · aktuell</small></div></div>`;
+}
+
+/* ---- nav ---- */
+function go(scr){hap(8);document.querySelectorAll('.nav button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===scr));document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));if(scr!=='map')document.getElementById(scr+'Screen').classList.add('show');if(scr==='people')renderPeople();if(scr==='comms')renderComms();if(scr==='map')setTimeout(()=>map.invalidateSize(),50);}
+
+function roleLabel(r){return{trust:'VERTRAUT',member:'MITGLIED',guest:'GAST'}[r]||r.toUpperCase();}
+function renderPeople(){
+  document.getElementById('peopleCount').textContent=demoOn?contacts.length+' Demo-Kontakte':'0 Kontakte';
+  const L2=document.getElementById('peopleList');
+  L2.innerHTML=`<div class="person" onclick="openSheet('addSheet');renderAdd()" style="cursor:pointer"><div class="pav" style="background:rgba(215,165,58,.12);border-color:rgba(215,165,58,.4);color:var(--signal)">+</div><div class="nm"><b style="color:var(--signal)">Person hinzufügen</b><small>QR · Code · Telefonnummer</small></div></div>`;
+  if(!demoOn){L2.innerHTML+=`<div class="note" style="text-align:center;padding:30px 10px">Noch niemand verbunden.<br>Echtes Live-Teilen zwischen Geräten kommt mit dem Firebase-Schritt — dann erscheinen hier deine echten Freunde & Familie.</div>`;return;}
+  contacts.forEach(c=>{
+    const stClass=c.sos?'sos':(c.live?'on':'off');const roleCls=c.role==='trust'?'trust':'';
+    L2.innerHTML+=`<div class="person"><div class="pav" onclick="openDossier(contacts.find(x=>x.id==='${c.id}'))" style="cursor:pointer">${c.init}<span class="st ${stClass}"></span></div><div class="nm" onclick="openDossier(contacts.find(x=>x.id==='${c.id}'))" style="cursor:pointer"><b>${c.name} <span class="rolechip demo">DEMO</span></b><small>${c.live?'● '+c.zone+' · '+c.heading:'○ zuletzt vor '+c.last+' min'}</small></div><div class="batt"><div class="battbar ${c.battery<25?'low':''}"><i style="width:${c.battery}%"></i></div>${c.battery}%</div></div>`;
+  });
+}
+
 let curContact=null;
-function openDossier(c){
-  curContact=c;hap(10);
-  document.getElementById('dossName').textContent=c.name;
-  document.getElementById('dossSub').textContent='NODE · '+c.id.toUpperCase()+' · '+roleLabel(c.role);
-  const paused = c.consent==='paused';
+function openDossier(c){curContact=c;hap(10);document.getElementById('dossName').textContent=c.name;document.getElementById('dossSub').textContent='DEMO · '+roleLabel(c.role);
   document.getElementById('dossBody').innerHTML=`
     <div class="top"><div class="pavb">${c.init}</div><div><h2>${c.name}</h2><div class="sub mono" style="color:var(--ink3);font-size:11px;margin-top:3px">${c.live?'● LIVE · '+c.heading+' · '+c.speed+' km/h':'○ OFFLINE · vor '+c.last+' min'}</div></div></div>
-    <div class="metgrid metgrid metgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-      <div class="met"><div class="k">AKKU</div><div class="v">${c.battery}%<small> ${c.battery<25?'· kritisch':'· ok'}</small></div></div>
-      <div class="met"><div class="k">ZONE</div><div class="v" style="font-size:15px">${c.zone}</div></div>
-      <div class="met"><div class="k">LETZTES PING</div><div class="v" style="font-size:15px">${c.live?'jetzt':c.last+' min'}</div></div>
-      <div class="met"><div class="k">EINWILLIGUNG</div><div class="v" style="font-size:14px;color:#7fd1a6">beidseitig</div></div>
-    </div>
-    <div class="consent ${paused?'paused':''}" style="margin:12px 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Standort wird geteilt, solange ${c.name} es erlaubt — sichtbar für beide.</div>
-    <div class="secttl">Charakterisierung</div>
-    <div class="field"><textarea rows="2" oninput="curContact.note=this.value">${c.note}</textarea></div>
-    <div style="display:flex;gap:9px;margin-top:4px">
-      <button class="btn" style="flex:1" onclick="routeTo(curContact)">Route planen</button>
-      <button class="btn ghost" style="flex:1" onclick="openSheet('roleSheet');renderRoles(curContact)">Freigaben</button>
-    </div>
-    <div style="display:flex;gap:9px;margin-top:9px">
-      <button class="btn ghost" style="flex:1" onclick="go('comms');closeSheets();toast('good','Chat mit ${c.name}')">Nachricht</button>
-      <button class="btn ghost op-feature" style="flex:1" onclick="toast('good','Ping an ${c.name} gesendet');hap(12)">Anpingen</button>
-    </div>`;
+    <div class="metgrid"><div class="met"><div class="k">AKKU</div><div class="v">${c.battery}%<small> ${c.battery<25?'· kritisch':'· ok'}</small></div></div><div class="met"><div class="k">ZONE</div><div class="v" style="font-size:15px">${c.zone}</div></div><div class="met"><div class="k">LETZTES PING</div><div class="v" style="font-size:15px">${c.live?'jetzt':c.last+' min'}</div></div><div class="met"><div class="k">EINWILLIGUNG</div><div class="v" style="font-size:14px;color:#7fd1a6">beidseitig</div></div></div>
+    <div class="consent" style="margin:12px 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Standort wird geteilt, solange ${c.name} es erlaubt — sichtbar für beide.</div>
+    <div class="secttl">Charakterisierung</div><div class="field"><textarea rows="2" oninput="curContact.note=this.value">${c.note}</textarea></div>
+    <div style="display:flex;gap:9px;margin-top:4px"><button class="btn" style="flex:1" onclick="routeTo(curContact)">Route planen</button><button class="btn ghost" style="flex:1" onclick="openSheet('roleSheet');renderRoles(curContact)">Freigaben</button></div>
+    <div style="display:flex;gap:9px;margin-top:9px"><button class="btn ghost" style="flex:1" onclick="go('comms');closeSheets();toast('good','Chat mit ${c.name}')">Nachricht</button><button class="btn ghost op-feature" style="flex:1" onclick="toast('good','Ping an ${c.name} gesendet');hap(12)">Anpingen</button></div>`;
   openSheet('dossSheet');
 }
-function routeTo(c){closeSheets();go('map');toast('good','Route zu '+c.name+' · 2,4 km · 8 min');hapPat([10,30,10]);}
+function routeTo(c){closeSheets();go('map');if(routeLine)map.removeLayer(routeLine);routeLine=L.polyline([meLL,cLL(c)],{color:'#d7a53a',weight:3,dashArray:'2 8',opacity:.8}).addTo(map);map.fitBounds(routeLine.getBounds().pad(0.4));const km=(map.distance(meLL,cLL(c))/1000).toFixed(1);toast('good','Luftlinie zu '+c.name+' · '+km+' km');hapPat([10,30,10]);}
 
-/* ============================================================ ROLES (discord-style) */
-const PERMS=[
-  {id:'see',t:'Live-Standort sehen',d:'darf deine Position auf der Karte sehen'},
-  {id:'batt',t:'Akku & Gerät',d:'sieht Akkustand und Online-Status'},
-  {id:'sos',t:'SOS empfangen',d:'bekommt dein Notsignal'},
-  {id:'zone',t:'Zonen-Alarme',d:'wird bei Betreten/Verlassen benachrichtigt'},
-  {id:'pins',t:'Pins & Orte',d:'sieht deine markierten Orte'},
-  {id:'chat',t:'Direktnachrichten',d:'darf dir schreiben'}
-];
-function renderRoles(c){
-  document.getElementById('roleName').textContent='Freigaben · '+c.name;
-  if(!c.perms)c.perms={see:true,batt:true,sos:true,zone:c.role==='trust',pins:c.role!=='guest',chat:true};
-  let h=`<div class="note" style="margin:0 0 16px">Du steuerst, was <b>${c.name}</b> von dir sieht — genau wie Rollen auf Discord. ${c.name} steuert dasselbe für sich. Nichts davon ist versteckt.</div>`;
-  PERMS.forEach(p=>{
-    h+=`<div class="perm"><div class="pt"><b>${p.t}</b><small>${p.d}</small></div>
-      <div class="tgl ${c.perms[p.id]?'on':''}" onclick="curContact.perms['${p.id}']=!curContact.perms['${p.id}'];this.classList.toggle('on');hap(8)"><i></i></div></div>`;
-  });
-  h+=`<div class="secttl">Rolle</div>
-    <div style="display:flex;gap:8px">
-      ${['trust','member','guest'].map(r=>`<button class="btn ${c.role===r?'':'ghost'}" style="flex:1;font-size:13px;height:42px" onclick="curContact.role='${r}';renderRoles(curContact);hap(8)">${roleLabel(r)}</button>`).join('')}
-    </div>
-    <button class="btn danger" style="margin-top:20px" onclick="closeSheets();toast('warn','Freigabe für ${c.name} beendet')">Freigabe beenden</button>`;
+const PERMS=[{id:'see',t:'Live-Standort sehen',d:'darf deine Position sehen'},{id:'batt',t:'Akku & Gerät',d:'sieht Akkustand und Online-Status'},{id:'sos',t:'SOS empfangen',d:'bekommt dein Notsignal'},{id:'zone',t:'Zonen-Alarme',d:'Alarm bei Betreten/Verlassen'},{id:'pins',t:'Pins & Orte',d:'sieht deine markierten Orte'},{id:'chat',t:'Direktnachrichten',d:'darf dir schreiben'}];
+function renderRoles(c){document.getElementById('roleName').textContent='Freigaben · '+c.name;if(!c.perms)c.perms={see:true,batt:true,sos:true,zone:c.role==='trust',pins:c.role!=='guest',chat:true};
+  let h=`<div class="note" style="margin:0 0 16px">Du steuerst, was <b>${c.name}</b> von dir sieht — wie Rollen auf Discord. ${c.name} steuert dasselbe für sich. Nichts ist versteckt.</div>`;
+  PERMS.forEach(p=>{h+=`<div class="perm"><div class="pt"><b>${p.t}</b><small>${p.d}</small></div><div class="tgl ${c.perms[p.id]?'on':''}" onclick="curContact.perms['${p.id}']=!curContact.perms['${p.id}'];this.classList.toggle('on');hap(8)"><i></i></div></div>`;});
+  h+=`<div class="secttl">Rolle</div><div style="display:flex;gap:8px">${['trust','member','guest'].map(r=>`<button class="btn ${c.role===r?'':'ghost'}" style="flex:1;font-size:13px;height:42px" onclick="curContact.role='${r}';renderRoles(curContact);hap(8)">${roleLabel(r)}</button>`).join('')}</div><button class="btn danger" style="margin-top:20px" onclick="closeSheets();toast('warn','Freigabe für ${c.name} beendet')">Freigabe beenden</button>`;
   document.getElementById('roleBody').innerHTML=h;
 }
 
-/* ============================================================ ADD PERSON */
 let addMode='qr';
-function renderAdd(){
-  const b=document.getElementById('addBody');
-  b.innerHTML=`
-    <div class="addrow">
-      <div class="opt ${addMode==='qr'?'on':''}" onclick="addMode='qr';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg><b>QR-Code</b></div>
-      <div class="opt ${addMode==='code'?'on':''}" onclick="addMode='code';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h.01M11 10h2M7 14h10"/></svg><b>Code</b></div>
-      <div class="opt ${addMode==='phone'?'on':''}" onclick="addMode='phone';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2Z"/></svg><b>Telefon</b></div>
-    </div>`;
-  if(addMode==='qr'){
-    b.innerHTML+=`<div class="qrbox">${qrSVG()}</div><p class="note" style="text-align:center">Die andere Person scannt diesen Code. <b>Beide bestätigen</b> — dann seht ihr euch gegenseitig.</p>`;
-  }else if(addMode==='code'){
-    b.innerHTML+=`<div class="codebox"><div class="mono" style="font-size:10px;color:var(--ink3)">EINLADUNGSCODE</div><div class="code">7K2-QX9</div><div class="mono" style="font-size:10px;color:var(--ink3)">gültig 10 min</div></div><button class="btn ghost" onclick="toast('good','Code kopiert')">Code teilen</button>`;
-  }else{
-    b.innerHTML+=`<div class="field"><label>TELEFONNUMMER</label><input placeholder="+49 …" inputmode="tel"></div><div class="field"><label>NAME</label><input placeholder="z. B. Mara"></div><button class="btn" onclick="closeSheets();toast('good','Einladung gesendet — wartet auf Zustimmung')">Einladung senden</button>`;
-  }
-  b.innerHTML+=`<div class="consent" style="margin-top:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Bevor etwas geteilt wird, bekommt die Person eine klare Erklärung, was sichtbar wird — und muss aktiv zustimmen.</div>`;
+function renderAdd(){const b=document.getElementById('addBody');
+  b.innerHTML=`<div class="addrow"><div class="opt ${addMode==='qr'?'on':''}" onclick="addMode='qr';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg><b>QR-Code</b></div><div class="opt ${addMode==='code'?'on':''}" onclick="addMode='code';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h.01M11 10h2M7 14h10"/></svg><b>Code</b></div><div class="opt ${addMode==='phone'?'on':''}" onclick="addMode='phone';renderAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2Z"/></svg><b>Telefon</b></div></div>`;
+  if(addMode==='qr')b.innerHTML+=`<div class="qrbox">${qrSVG()}</div><p class="note" style="text-align:center">Die andere Person scannt diesen Code. <b>Beide bestätigen</b> — dann seht ihr euch gegenseitig.</p>`;
+  else if(addMode==='code')b.innerHTML+=`<div class="codebox"><div class="mono" style="font-size:10px;color:var(--ink3)">EINLADUNGSCODE</div><div class="code">7K2-QX9</div><div class="mono" style="font-size:10px;color:var(--ink3)">gültig 10 min</div></div><button class="btn ghost" onclick="toast('good','Code kopiert')">Code teilen</button>`;
+  else b.innerHTML+=`<div class="field"><label>TELEFONNUMMER</label><input placeholder="+49 …" inputmode="tel"></div><div class="field"><label>NAME</label><input placeholder="z. B. Mara"></div><button class="btn" onclick="closeSheets();toast('good','Einladung gesendet — wartet auf Zustimmung')">Einladung senden</button>`;
+  b.innerHTML+=`<div class="consent" style="margin-top:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Bevor etwas geteilt wird, bekommt die Person eine klare Erklärung — und muss aktiv zustimmen.</div>`;
 }
-function qrSVG(){
-  let r='';const n=11;
-  for(let i=0;i<n;i++)for(let j=0;j<n;j++){
-    const corner=(i<3&&j<3)||(i<3&&j>n-4)||(i>n-4&&j<3);
-    if(corner||Math.random()>.5)r+=`<rect x="${j*18}" y="${i*18}" width="18" height="18" fill="#000"/>`;
-  }
-  return `<svg viewBox="0 0 ${n*18} ${n*18}" width="100%"><rect width="100%" height="100%" fill="#fff"/>${r}</svg>`;
-}
+function qrSVG(){let r='';const n=11;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const corner=(i<3&&j<3)||(i<3&&j>n-4)||(i>n-4&&j<3);if(corner||Math.random()>.5)r+=`<rect x="${j*18}" y="${i*18}" width="18" height="18" fill="#000"/>`;}return `<svg viewBox="0 0 ${n*18} ${n*18}" width="100%"><rect width="100%" height="100%" fill="#fff"/>${r}</svg>`;}
 
-/* ============================================================ CONSENT CENTER */
-function renderConsent(){
-  let h=`<div class="note" style="margin:0 0 14px;line-height:1.6">Hier siehst du jede aktive Standortfreigabe. In AEGIS ist Tracking <b>immer gegenseitig</b>: Wenn du jemanden siehst, sieht die Person, dass du sie siehst. Niemand wird heimlich verfolgt, und jede:r kann jederzeit pausieren.</div>`;
-  contacts.forEach(c=>{
-    h+=`<div class="perm"><div class="pt"><b>${c.name}</b><small>${c.consent==='paused'?'pausiert durch '+c.name:'teilt mit dir · du teilst zurück'}</small></div>
-      <div class="consent ${c.consent==='paused'?'paused':''}" style="margin:0;padding:6px 10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>${c.consent==='paused'?'pausiert':'aktiv'}</div></div>`;
-  });
-  h+=`<div class="secttl">Deine Daten</div>
-    <div class="row"><div class="rt"><b>Zero-Knowledge Speicher</b><small>Standorte liegen verschlüsselt, Anbieter kann sie nicht lesen</small></div></div>
-    <div class="row"><div class="rt"><b>Verlauf automatisch löschen</b><small>nach 24 h</small></div><div class="tgl on"><i></i></div></div>
-    <div class="row"><div class="rt"><b>Daten exportieren / löschen</b><small>DSGVO · jederzeit</small></div></div>`;
+function renderConsent(){let h=`<div class="note" style="margin:0 0 14px;line-height:1.6">Hier siehst du jede aktive Standortfreigabe. In AEGIS ist Tracking <b>immer gegenseitig</b>: Wenn du jemanden siehst, sieht die Person, dass du sie siehst. Jede:r kann jederzeit pausieren.</div>`;
+  contacts.forEach(c=>{h+=`<div class="perm"><div class="pt"><b>${c.name}</b><small>teilt mit dir · du teilst zurück</small></div><div class="consent" style="margin:0;padding:6px 10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>aktiv</div></div>`;});
+  h+=`<div class="secttl">Deine Daten</div><div class="row"><div class="rt"><b>Zero-Knowledge Speicher</b><small>verschlüsselt, Anbieter kann nichts lesen</small></div></div><div class="row"><div class="rt"><b>Verlauf automatisch löschen</b><small>nach 24 h</small></div><div class="tgl on"><i></i></div></div><div class="row"><div class="rt"><b>Daten exportieren / löschen</b><small>DSGVO · jederzeit</small></div></div>`;
   document.getElementById('consentBody').innerHTML=h;
 }
 
-/* ============================================================ OFFLINE MAPS */
-const REGIONS=[{n:'München & Umland',s:'312 MB',st:1},{n:'Alpen · Tirol',s:'540 MB',st:0},{n:'Berlin Zentrum',s:'198 MB',st:0},{n:'Gardasee',s:'276 MB',st:0}];
-function renderOffline(){
-  let h=`<div class="field"><label>REGION SUCHEN</label><input placeholder="Stadt, Land oder Gebiet…"></div>
-    <div class="note" style="margin:-4px 0 16px">HD-Vektorkarten · weltweit · funktionieren komplett ohne Netz. Updates inkl. Baustellen laden automatisch, sobald du online bist.</div>`;
-  REGIONS.forEach((r,i)=>{
-    h+=`<div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/></svg></div>
-      <div class="rt"><b>${r.n}</b><small>${r.s} · HD</small></div>
-      <button class="btn ghost" style="width:auto;height:38px;padding:0 16px;font-size:13px" id="dl${i}" onclick="dlRegion(${i},'${r.n}')">${r.st?'✓ geladen':'Laden'}</button></div>`;
-  });
-  document.getElementById('offlineBody').innerHTML=h;
-}
-function dlRegion(i,name){
-  const btn=document.getElementById('dl'+i);if(btn.dataset.done)return;
-  hap(10);let p=0;btn.textContent='0%';
-  const t=setInterval(()=>{p+=Math.random()*18;if(p>=100){p=100;clearInterval(t);btn.textContent='✓ geladen';btn.dataset.done=1;toast('good',name+' offline verfügbar');hapPat([10,30,10]);}else btn.textContent=Math.floor(p)+'%';},180);
-}
+const REGIONS=[{n:'München & Umland',s:'312 MB'},{n:'Alpen · Tirol',s:'540 MB'},{n:'Berlin Zentrum',s:'198 MB'},{n:'Gardasee',s:'276 MB'}];
+function renderOffline(){let h=`<div class="field"><label>REGION SUCHEN</label><input placeholder="Stadt, Land oder Gebiet…"></div><div class="note" style="margin:-4px 0 16px">Gebiete, die du auf der Karte ansiehst, werden automatisch gecacht und funktionieren danach offline. Ganze Regionen am Stück:</div>`;
+  REGIONS.forEach((r,i)=>{h+=`<div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/></svg></div><div class="rt"><b>${r.n}</b><small>${r.s} · HD</small></div><button class="btn ghost" style="width:auto;height:38px;padding:0 16px;font-size:13px" id="dl${i}" onclick="dlRegion(${i},'${r.n}')">Laden</button></div>`;});
+  document.getElementById('offlineBody').innerHTML=h;}
+function dlRegion(i,name){const btn=document.getElementById('dl'+i);if(btn.dataset.done)return;hap(10);let p=0;const t=setInterval(()=>{p+=Math.random()*18;if(p>=100){clearInterval(t);btn.textContent='✓ geladen';btn.dataset.done=1;toast('good',name+' offline verfügbar');hapPat([10,30,10]);}else btn.textContent=Math.floor(p)+'%';},180);}
 
-/* ============================================================ TRANSIT */
-function renderTransit(){
-  const deps=[
-    {t:'bus',l:'53',to:'Hauptbahnhof',via:'über Marktplatz',min:2},
-    {t:'train',l:'S4',to:'Flughafen',via:'Gleis 2',min:6},
-    {t:'bus',l:'12',to:'Universität',via:'über Ring',min:9},
-    {t:'taxi',l:'TX',to:'Freie Taxis',via:'3 in der Nähe',min:4},
-    {t:'train',l:'U2',to:'Zentrum Süd',via:'Gleis 1',min:11}
-  ];
-  let h=`<div class="note" style="margin:0 0 14px">Live-Abfahrten in deiner Nähe · aktualisiert jede Minute.</div>`;
-  deps.forEach(d=>{
-    h+=`<div class="dep"><div class="linebadge lb-${d.t}">${d.l}</div>
-      <div class="dt"><b>${d.to}</b><small>${d.via}</small></div>
-      <div class="din">${d.min}<small>min</small></div></div>`;
-  });
-  document.getElementById('transitBody').innerHTML=h;
-}
+function renderTransit(){const deps=[{t:'bus',l:'53',to:'Hauptbahnhof',via:'über Marktplatz',min:2},{t:'train',l:'S4',to:'Flughafen',via:'Gleis 2',min:6},{t:'bus',l:'12',to:'Universität',via:'über Ring',min:9},{t:'taxi',l:'TX',to:'Freie Taxis',via:'3 in der Nähe',min:4},{t:'train',l:'U2',to:'Zentrum Süd',via:'Gleis 1',min:11}];
+  let h=`<div class="note" style="margin:0 0 14px">Live-Abfahrten in deiner Nähe (Demo-Daten — echte Anbindung kommt später).</div>`;
+  deps.forEach(d=>{h+=`<div class="dep"><div class="linebadge lb-${d.t}">${d.l}</div><div class="dt"><b>${d.to}</b><small>${d.via}</small></div><div class="din">${d.min}<small>min</small></div></div>`;});
+  document.getElementById('transitBody').innerHTML=h;}
 
-/* ============================================================ PING / RADAR */
-function doPing(){
-  hapPat([12,40,12,40,12]);
-  document.body.classList.add('pinging');
-  setTimeout(()=>document.body.classList.remove('pinging'),3600);
-}
-function renderPing(){
-  const sorted=[...contacts].filter(c=>c.live).map(c=>{
-    const d=Math.round(Math.hypot(c.x-ME.x,c.y-ME.y)*42)/100; // fake km
-    return {...c,dist:d};
-  }).sort((a,b)=>a.dist-b.dist);
-  let h=`<div class="note" style="margin:0 0 6px">Intervall-Scan aktiv · alle 30 s. Nähe zu deinem Standort:</div>`;
-  sorted.forEach(c=>{
-    h+=`<div class="person" style="border:none;padding:10px 0"><div class="pav">${c.init}<span class="st on"></span></div>
-      <div class="nm"><b>${c.name}</b><small>${c.heading} · ${c.speed} km/h</small></div>
-      <div class="din mono" style="font-size:16px;font-weight:700">${c.dist.toFixed(1)}<small style="font-size:9px;color:var(--ink3)"> km</small></div></div>`;
-  });
+function doPing(){hapPat([12,40,12,40,12]);document.body.classList.add('pinging');setTimeout(()=>document.body.classList.remove('pinging'),3400);}
+function renderPing(){const sorted=contacts.filter(c=>c.live).map(c=>({...c,dist:map.distance(meLL,cLL(c))/1000})).sort((a,b)=>a.dist-b.dist);
+  let h=`<div class="note" style="margin:0 0 6px">Nähe zu deinem Standort (Demo-Kontakte):</div>`;
+  sorted.forEach(c=>{h+=`<div class="person" style="border:none;padding:10px 0"><div class="pav">${c.init}<span class="st on"></span></div><div class="nm"><b>${c.name}</b><small>${c.heading} · ${c.speed} km/h</small></div><div class="din mono" style="font-size:16px;font-weight:700">${c.dist.toFixed(1)}<small style="font-size:9px;color:var(--ink3)"> km</small></div></div>`;});
   h+=`<button class="btn" style="margin-top:14px" onclick="doPing();toast('good','Alle Nodes angepingt')">Alle anpingen</button>`;
-  document.getElementById('pingBody').innerHTML=h;
-}
+  document.getElementById('pingBody').innerHTML=h;}
 
-/* ============================================================ COMMS */
 let chan='all';
 const CHANNELS={all:'# alle',team:'# team',fam:'# familie',ops:'# ops'};
-let chat={
-  all:[{f:'Mara',t:'21:40',txt:'bin gleich da ✌️'},{f:'me',t:'21:41',txt:'alles gut, warte am Späti'},{f:'Theo',t:'21:43',txt:'mein akku stirbt, haltet mich auf der karte'}],
-  team:[{f:'Lena',t:'20:10',txt:'route steht, treffen am park'}],
-  fam:[{f:'Opa Kurt',t:'18:30',txt:'bin gut zuhause angekommen 👍'}],
-  ops:[{f:'JABA',t:'—',txt:'Zone „Zuhause" von Opa Kurt bestätigt. Alles ruhig.'}]
-};
-function renderComms(){
-  const C=document.getElementById('channels');
-  C.innerHTML=Object.keys(CHANNELS).map(k=>`<button class="chan ${chan===k?'on':''}" onclick="chan='${k}';renderComms();hap(6)">${CHANNELS[k]}</button>`).join('');
-  const M=document.getElementById('msgs');
-  M.innerHTML=chat[chan].map(m=>{
-    const me=m.f==='me',jb=m.f==='JABA';
-    return `<div class="msg ${me?'me':''} ${jb?'jaba':''}">
-      <div class="mh">${me?'':'<b>'+m.f+'</b>'}<time>${m.t}</time></div>
-      <div class="bubble">${m.txt}</div></div>`;
-  }).join('');
-  M.scrollTop=M.scrollHeight;
-}
-function sendMsg(){
-  const i=document.getElementById('msgInput');if(!i.value.trim())return;
-  chat[chan].push({f:'me',t:nowt(),txt:i.value.trim()});i.value='';hap(8);renderComms();
-}
+let chat={all:[{f:'Mara',t:'21:40',txt:'bin gleich da ✌️'},{f:'me',t:'21:41',txt:'alles gut, warte am Späti'},{f:'Theo',t:'21:43',txt:'mein akku stirbt, haltet mich auf der karte'}],team:[{f:'Lena',t:'20:10',txt:'route steht, treffen am park'}],fam:[{f:'Opa Kurt',t:'18:30',txt:'bin gut zuhause angekommen 👍'}],ops:[{f:'JABA',t:'—',txt:'Zone „Zuhause" von Opa Kurt bestätigt. Alles ruhig.'}]};
+function renderComms(){document.getElementById('channels').innerHTML=Object.keys(CHANNELS).map(k=>`<button class="chan ${chan===k?'on':''}" onclick="chan='${k}';renderComms();hap(6)">${CHANNELS[k]}</button>`).join('');
+  const M=document.getElementById('msgs');M.innerHTML=chat[chan].map(m=>{const me=m.f==='me',jb=m.f==='JABA';return `<div class="msg ${me?'me':''} ${jb?'jaba':''}"><div class="mh">${me?'':'<b>'+m.f+'</b>'}<time>${m.t}</time></div><div class="bubble">${m.txt}</div></div>`;}).join('');M.scrollTop=M.scrollHeight;}
+function sendMsg(){const i=document.getElementById('msgInput');if(!i.value.trim())return;chat[chan].push({f:'me',t:nowt(),txt:i.value.trim()});i.value='';hap(8);renderComms();}
 function nowt(){const d=new Date();return (''+d.getHours()).padStart(2,'0')+':'+(''+d.getMinutes()).padStart(2,'0');}
 
-/* ============================================================ JABA ASSISTANT */
 let jabaChat=[{me:false,txt:'Operator JABA online. Ich halte dein Netzwerk im Blick — frag mich nach Status, Routen, Akku oder Transit.'}];
-function renderJaba(){
-  const M=document.getElementById('jabaMsgs');
-  M.innerHTML=jabaChat.map(m=>`<div class="msg ${m.me?'me':'jaba'}">${m.me?'':'<div class="mh"><b>JABA</b></div>'}<div class="bubble">${m.txt}</div></div>`).join('');
-  M.scrollTop=M.scrollHeight;
-}
+function renderJaba(){const M=document.getElementById('jabaMsgs');M.innerHTML=jabaChat.map(m=>`<div class="msg ${m.me?'me':'jaba'}">${m.me?'':'<div class="mh"><b>JABA</b></div>'}<div class="bubble">${m.txt}</div></div>`).join('');M.scrollTop=M.scrollHeight;}
 function jabaSend(){const i=document.getElementById('jabaInput');if(!i.value.trim())return;jabaAsk(i.value.trim());i.value='';}
-function jabaAsk(q){
-  jabaChat.push({me:true,txt:q});renderJaba();hap(8);
-  setTimeout(()=>{jabaChat.push({me:false,txt:jabaReply(q)});renderJaba();hap(6);},520);
-}
-function jabaReply(q){
-  q=q.toLowerCase();
-  if(q.includes('akku')||q.includes('batter')){
-    const low=contacts.filter(c=>c.battery<40).sort((a,b)=>a.battery-b.battery);
-    return low.length?`Kritisch: <b>${low[0].name}</b> (${low[0].battery}%)${low[1]?', dann '+low[1].name+' ('+low[1].battery+'%)':''}. Soll ich ${low[0].name} erinnern, aufzuladen?`:'Alle Nodes über 40 % — alles entspannt.';
-  }
-  if(q.includes('route')){
-    const name=contacts.find(c=>q.includes(c.name.toLowerCase()));
-    const tg=name||contacts[0];
-    return `Route zu <b>${tg.name}</b>: ${(Math.hypot(tg.x-ME.x,tg.y-ME.y)*42/100).toFixed(1)} km, ca. ${Math.max(5,Math.round(Math.hypot(tg.x-ME.x,tg.y-ME.y)))} min. ${tg.zone==='unterwegs'?tg.name+' bewegt sich gerade — ich aktualisiere die Route live.':''} Tippe oben auf „Route planen".`;
-  }
-  if(q.includes('status')||q.includes('lage')){
-    const live=contacts.filter(c=>c.live).length;
-    return `Lage-Status: <b>${live} von ${contacts.length}</b> live. Zonen „Zuhause" (Mara, Opa) ruhig. ${contacts.find(c=>c.battery<25)?'⚠ Theo hat nur 19 % Akku.':''} Keine SOS-Signale. Karte aktuell, keine Sperrungen im Umkreis.`;
-  }
-  if(q.includes('bahn')||q.includes('bus')||q.includes('transit')||q.includes('zug')){
-    return `Nächste Verbindungen: Bus 53 → Hauptbahnhof in <b>2 min</b>, S4 → Flughafen in 6 min. Taxi: 3 frei in der Nähe. Öffne Transit für mehr.`;
-  }
-  if(q.includes('sos')||q.includes('notfall')||q.includes('hilfe')){
-    return `Im Notfall: SOS-Button unten links oder in der Leiste. Das sendet deinen Standort, Akku und einen Audio-Marker an dein Vertrauens-Netzwerk — sofort.`;
-  }
-  if(q.includes('ghost')||q.includes('verberg')||q.includes('unsicht')){
-    return `Ghost-Mode pausiert dein Teilen. Fair bleibt's trotzdem: deine Kontakte sehen „pausiert", keinen gefälschten Ort. Tippe oben rechts auf LIVE.`;
-  }
-  if(q.includes('pin')||q.includes('kamera')||q.includes('markier')){
-    return `Du hast ${pins.length} Pins gesetzt (u. a. „Kamera Kreuzung", „Späti 24h"). Tippe auf die Karte und halte, um einen neuen Pin mit Foto & Notiz zu setzen.`;
-  }
+function jabaAsk(q){jabaChat.push({me:true,txt:q});renderJaba();hap(8);setTimeout(()=>{jabaChat.push({me:false,txt:jabaReply(q)});renderJaba();hap(6);},520);}
+function jabaReply(q){q=q.toLowerCase();
+  if(q.includes('akku')||q.includes('batter')){const low=contacts.filter(c=>c.battery<40).sort((a,b)=>a.battery-b.battery);return low.length?`Kritisch: <b>${low[0].name}</b> (${low[0].battery}%)${low[1]?', dann '+low[1].name+' ('+low[1].battery+'%)':''}. Soll ich ${low[0].name} ans Laden erinnern?`:'Alle über 40 % — entspannt.';}
+  if(q.includes('route')){const name=contacts.find(c=>q.includes(c.name.toLowerCase()));const tg=name||contacts[0];const km=(map.distance(meLL,cLL(tg))/1000).toFixed(1);return `Luftlinie zu <b>${tg.name}</b>: ${km} km. Tippe im Kontakt auf „Route planen" — ich zeichne die Linie auf der Karte. (Echte Straßen-Routen kommen im nächsten Schritt.)`;}
+  if(q.includes('status')||q.includes('lage')){const live=contacts.filter(c=>c.live).length;return `Lage-Status: <b>${live} von ${contacts.length}</b> Demo-Nodes live. ${contacts.find(c=>c.battery<25)?'⚠ Theo hat nur 19 % Akku.':''} Keine SOS-Signale. Karte aktuell.`;}
+  if(q.includes('bahn')||q.includes('bus')||q.includes('transit')||q.includes('zug')){return `Nächste Verbindungen: Bus 53 → Hauptbahnhof in <b>2 min</b>, S4 → Flughafen in 6 min. Taxi: 3 frei. Öffne Transit für mehr.`;}
+  if(q.includes('sos')||q.includes('notfall')||q.includes('hilfe')){return `Im Notfall: SOS-Button unten links. Sendet Standort, Akku und Audio-Marker sofort an dein Vertrauens-Netzwerk.`;}
+  if(q.includes('ghost')||q.includes('verberg')){return `Ghost-Mode pausiert dein Teilen — deine Kontakte sehen „pausiert", keinen Fake-Ort. Oben rechts auf LIVE tippen.`;}
   if(q.includes('hallo')||q.includes('hi')||q.includes('hey')){return 'Hey Operator. Was brauchst du — Lage, Route oder jemanden anpingen?';}
-  return 'Verstanden. Ich kann dir Live-Status, Routen zu deinem Netzwerk, Akku-Warnungen, Transit und Pins liefern. Was davon brauchst du?';
-}
+  return 'Ich kann dir Live-Status, Routen, Akku-Warnungen, Transit und Pins liefern. Was davon brauchst du?';}
 
-/* ============================================================ SHEETS */
-function openSheet(id){
-  document.getElementById('scrim').classList.add('show');
-  document.getElementById(id).classList.add('show');
-  if(id==='offlineSheet')renderOffline();
-  if(id==='transitSheet')renderTransit();
-  if(id==='pingSheet')renderPing();
-  if(id==='consentSheet')renderConsent();
-  if(id==='addSheet')renderAdd();
-}
-function closeSheets(){
-  document.getElementById('scrim').classList.remove('show');
-  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
-}
+function openSheet(id){document.getElementById('scrim').classList.add('show');document.getElementById(id).classList.add('show');if(id==='offlineSheet')renderOffline();if(id==='transitSheet')renderTransit();if(id==='pingSheet')renderPing();if(id==='consentSheet')renderConsent();if(id==='addSheet')renderAdd();}
+function closeSheets(){document.getElementById('scrim').classList.remove('show');document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));}
 
-/* ============================================================ GHOST / TILT / FAMILY */
-function toggleGhost(){
-  ghost=!ghost;hap(10);
-  document.getElementById('ghostBtn').classList.toggle('on',ghost);
-  document.getElementById('ghostLbl').textContent=ghost?'GHOST':'LIVE';
-  document.getElementById('ghostTgl').classList.toggle('on',ghost);
-  toast(ghost?'warn':'good',ghost?'Ghost-Mode an · Kontakte sehen „pausiert"':'Du bist wieder live');
-  renderMap();
-}
-function toggleTilt(){
-  tilt=!tilt;hap(10);
-  document.body.classList.toggle('tilt',tilt);
-  document.getElementById('tiltBtn').classList.toggle('on',tilt);
-  toast('good',tilt?'3D-Ansicht an':'2D-Ansicht');
-}
-function recenter(){hap(8);toast('good','Auf deinen Standort zentriert');}
-function toggleFamily(){
-  family=!family;hap(12);closeSheets();
-  document.body.classList.toggle('family',family);
-  document.getElementById('brandName').textContent=family?'Kin':'AEGIS';
-  document.getElementById('brandSub').textContent=family?'Familie':'NODE · JABA';
-  document.querySelector('.op-only')&&(document.querySelector('.op-only').style.display=family?'none':'');
-  document.querySelector('.fam-mark')&&(document.querySelector('.fam-mark').style.display=family?'':'none');
-  document.querySelector('.mark circle')&&(document.querySelector('.mark circle').style.color=family?'#7c4dff':'#d7a53a');
-  document.getElementById('famExit').style.display=family?'flex':'none';
-  if(family){go('map');toast('good','Kin-Ansicht · so sehen Familienmitglieder die App');}
-  else toast('good','Zurück im Operator-Modus');
-  renderMap();renderIntel();
-}
+function toggleGhost(){ghost=!ghost;hap(10);document.getElementById('ghostBtn').classList.toggle('on',ghost);document.getElementById('ghostLbl').textContent=ghost?'GHOST':'LIVE';document.getElementById('ghostTgl').classList.toggle('on',ghost);meMarker.setIcon(meIcon());toast(ghost?'warn':'good',ghost?'Ghost-Mode an · Kontakte sehen „pausiert"':'Du bist wieder live');}
+function toggleDemo(){demoOn=!demoOn;hap(10);document.getElementById('demoTgl').classList.toggle('on',demoOn);renderContacts();toast('good',demoOn?'Demo-Kontakte sichtbar':'Demo-Kontakte ausgeblendet');}
+function toggleFamily(){family=!family;hap(12);closeSheets();document.body.classList.toggle('family',family);document.getElementById('brandName').textContent=family?'Kin':'AEGIS';document.getElementById('brandSub').textContent=family?'Familie':'NODE · JABA';document.getElementById('famExit').style.display=family?'flex':'none';applyTiles();if(family){go('map');toast('good','Kin-Ansicht · so sehen Familienmitglieder die App');}else toast('good','Zurück im Operator-Modus');}
 
-/* ============================================================ SOS */
 let sosTimer=null,sosN=3;
-function startSOS(){
-  hapPat([40,60,40]);sosN=3;
-  const o=document.getElementById('sosover');o.classList.remove('sent');o.classList.add('show');
-  document.getElementById('sosNum').textContent=sosN;
-  document.getElementById('sosNum').style.display='';
-  document.getElementById('sosSent').style.display='none';
-  document.getElementById('sosTitle').textContent='Notsignal wird gesendet';
-  document.getElementById('sosDesc').textContent='Dein Standort, Akku und ein Audio-Marker gehen an dein Vertrauens-Netzwerk.';
-  document.getElementById('sosCancel').textContent='Abbrechen';
-  sosTimer=setInterval(()=>{
-    sosN--;hapPat([30]);
-    if(sosN<=0){clearInterval(sosTimer);sosSent();}
-    else document.getElementById('sosNum').textContent=sosN;
-  },1000);
-}
-function cancelSOS(){
-  if(document.getElementById('sosover').classList.contains('sent')){document.getElementById('sosover').classList.remove('show');return;}
-  clearInterval(sosTimer);document.getElementById('sosover').classList.remove('show');hap(10);toast('good','SOS abgebrochen');
-}
-function sosSent(){
-  hapPat([80,50,80,50,120]);
-  const o=document.getElementById('sosover');o.classList.add('sent');
-  document.getElementById('sosNum').style.display='none';
-  document.getElementById('sosSent').style.display='flex';
-  document.getElementById('sosLbl').textContent='GESENDET AN 4 KONTAKTE';
-  document.getElementById('sosTitle').textContent='Notsignal gesendet';
-  document.getElementById('sosDesc').textContent='Mara, Lena, Opa Kurt und Theo wurden alarmiert. Dein Live-Standort ist für sie jetzt priorisiert sichtbar.';
-  document.getElementById('sosCancel').textContent='Schließen';
-}
+function startSOS(){hapPat([40,60,40]);sosN=3;const o=document.getElementById('sosover');o.classList.remove('sent');o.classList.add('show');document.getElementById('sosNum').textContent=sosN;document.getElementById('sosNum').style.display='';document.getElementById('sosSent').style.display='none';document.getElementById('sosLbl').textContent='WIRD GESENDET';document.getElementById('sosTitle').textContent='Notsignal wird gesendet';document.getElementById('sosDesc').textContent='Dein Standort, Akku und ein Audio-Marker gehen an dein Vertrauens-Netzwerk.';document.getElementById('sosCancel').textContent='Abbrechen';sosTimer=setInterval(()=>{sosN--;hapPat([30]);if(sosN<=0){clearInterval(sosTimer);sosSent();}else document.getElementById('sosNum').textContent=sosN;},1000);}
+function cancelSOS(){if(document.getElementById('sosover').classList.contains('sent')){document.getElementById('sosover').classList.remove('show');return;}clearInterval(sosTimer);document.getElementById('sosover').classList.remove('show');hap(10);toast('good','SOS abgebrochen');}
+function sosSent(){hapPat([80,50,80,50,120]);const o=document.getElementById('sosover');o.classList.add('sent');document.getElementById('sosNum').style.display='none';document.getElementById('sosSent').style.display='flex';document.getElementById('sosLbl').textContent='GESENDET AN 4 KONTAKTE';document.getElementById('sosTitle').textContent='Notsignal gesendet';document.getElementById('sosDesc').textContent='Dein Vertrauens-Netzwerk wurde alarmiert. Dein Live-Standort ist für sie jetzt priorisiert sichtbar.';document.getElementById('sosCancel').textContent='Schließen';}
 
-/* ============================================================ TOAST */
 let toastT=null;
-function toast(type,msg){
-  const t=document.getElementById('toast');
-  const ic=type==='bad'?'<path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/>':type==='warn'?'<path d="M12 9v4M12 17v.3"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z"/>':'<path d="M20 6 9 17l-5-5"/>';
-  t.className='toast '+type+' show';
-  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">${ic}</svg>${msg}`;
-  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);
-}
+function toast(type,msg){const t=document.getElementById('toast');const ic=type==='bad'?'<path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/>':type==='warn'?'<path d="M12 9v4M12 17v.3"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z"/>':'<path d="M20 6 9 17l-5-5"/>';t.className='toast '+type+' show';t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">${ic}</svg>${msg}`;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
 
-/* long-press on map to add pin */
-let pressT=null;
-document.getElementById('stage').addEventListener('pointerdown',e=>{
-  if(e.target.closest('.blip,.mpin,.mbtn,.sosfab,.intel'))return;
-  const rect=document.getElementById('stage').getBoundingClientRect();
-  const x=((e.clientX-rect.left)/rect.width*100), y=((e.clientY-rect.top)/rect.height*100);
-  pressT=setTimeout(()=>{openPinAt(x,y);},550);
-});
-document.getElementById('stage').addEventListener('pointerup',()=>clearTimeout(pressT));
-document.getElementById('stage').addEventListener('pointermove',()=>clearTimeout(pressT));
-function openPinAt(x,y){
-  hapPat([10,30,10]);
-  document.getElementById('pinBody').innerHTML=`
-    <div class="addrow">
-      <div class="opt on" onclick="this.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));this.classList.add('on');window._pt='cam'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.cam}</svg><b>Kamera</b></div>
-      <div class="opt" onclick="this.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));this.classList.add('on');window._pt='shop'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.shop}</svg><b>Laden</b></div>
-      <div class="opt" onclick="this.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));this.classList.add('on');window._pt='note'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.note}</svg><b>Notiz</b></div>
-    </div>
-    <div class="field"><label>BEZEICHNUNG</label><input id="pinLbl" placeholder="z. B. Kamera an der Ecke"></div>
-    <div class="field"><label>FOTO (optional)</label><input type="file" accept="image/*"></div>
-    <button class="btn" onclick="savePin(${x.toFixed(1)},${y.toFixed(1)})">Pin speichern</button>`;
-  window._pt='cam';
-  openSheet('pinSheet');
-}
-function savePin(x,y){
-  const lbl=document.getElementById('pinLbl').value||'Markierter Ort';
-  pins.push({x,y,type:window._pt||'note',label:lbl});
-  closeSheets();renderMap();renderIntel();hap(12);toast('good','Pin gesetzt · '+lbl);
-}
+function openPinAt(latlng){hapPat([10,30,10]);window._pll=latlng;
+  document.getElementById('pinBody').innerHTML=`<div class="addrow"><div class="opt on" onclick="pick(this,'cam')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.cam}</svg><b>Kamera</b></div><div class="opt" onclick="pick(this,'shop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.shop}</svg><b>Laden</b></div><div class="opt" onclick="pick(this,'note')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${PINICONS.note}</svg><b>Notiz</b></div></div><div class="field"><label>BEZEICHNUNG</label><input id="pinLbl" placeholder="z. B. Kamera an der Ecke"></div><div class="field"><label>FOTO (optional)</label><input type="file" accept="image/*"></div><button class="btn" onclick="savePin()">Pin speichern</button>`;
+  window._pt='cam';openSheet('pinSheet');}
+function pick(el,t){el.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));el.classList.add('on');window._pt=t;}
+function savePin(){const lbl=document.getElementById('pinLbl').value||'Markierter Ort';pins.push({lat:window._pll.lat,lng:window._pll.lng,type:window._pt||'note',label:lbl});closeSheets();renderPins();renderIntel();hap(12);toast('good','Pin gesetzt · '+lbl);}
 
-/* ============================================================ BOOT */
-function boot(){
-  buildMap();renderMap();renderIntel();renderJaba();
-  setInterval(tick,2600);
-  toast('good','Netzwerk verbunden · 4 Nodes live');
-}
-buildMap();renderMap();renderIntel();renderJaba();
+function boot(){initMap();renderJaba();setInterval(tick,2600);setTimeout(()=>{map.invalidateSize();},300);}
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){});});}</script>
 </body>
